@@ -3,13 +3,18 @@ defmodule IclogWeb.Endpoint do
 
   socket "/socket", IclogWeb.UserSocket
 
+  plug Plug.Static.IndexHtml,
+  at: "/"
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phoenix.digest
   # when deploying your static files in production.
   plug Plug.Static,
-    at: "/", from: :iclog, gzip: false,
-    only: ~w(css fonts images js favicon.ico robots.txt)
+    at: "/", 
+    gzip: false,
+    from:  "front-end-web/build",
+    only_matching: ~w(index.html favicon manifest robots.txt static service)
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
@@ -38,6 +43,7 @@ defmodule IclogWeb.Endpoint do
     key: "_iclog_key",
     signing_salt: "kZ0VK/ws"
 
+  plug  IclogWeb.Redictor
   plug IclogWeb.Router
 
   @doc """
