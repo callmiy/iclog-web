@@ -20,7 +20,7 @@ defmodule Iclog.Observable.ObservationMeta do
   def changeset(%ObservationMeta{} = observation_meta, attrs) do
     observation_meta
     |> cast(attrs, [:title, :intro])
-    |> validate_required([:title, :intro])
+    |> validate_required([:title])
   end
 
   @doc """
