@@ -2,6 +2,10 @@ defmodule Iclog.Observable.Observation.TestHelper do
   alias Iclog.Observable.Observation
   alias Iclog.Observable.ObservationMeta.TestHelper, as: ObservationMetaHelper
 
+  def valid_attrs(:no_meta) do
+    %{comment: "some comment"}
+  end
+
   def valid_attrs do
     meta = ObservationMetaHelper.fixture()
     %{comment: "some comment", observation_meta_id: meta.id}

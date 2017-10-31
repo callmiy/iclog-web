@@ -30,7 +30,14 @@ defmodule Iclog.Observable.Observation do
       iex> list()
       [%Observation{}, ...]
 
+      iex> list(:with_meta)
+
   """
+  def list(:with_meta) do
+    Repo.all from observation in Observation,
+      join: meta in assoc(observation, :observation_meta),
+      preload: [observation_meta: meta]
+  end
   def list do
     Repo.all(Observation)
   end
@@ -59,14 +66,30 @@ defmodule Iclog.Observable.Observation do
       iex> create(%{field: value})
       {:ok, %Observation{}}
 
+      iex> create(%{comment: value}, meta)
+      {:ok, %Observation{}}
+
       iex> create(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
+  def create(attrs, meta) do
+    with {:ok, %ObservationMeta{} = m} <- ObservationMeta.create(meta),
+          {:ok, %Observation{} = o} <- create(merge_observation_with_meta(attrs, m.id) ) do
+      {:ok, Map.put(o, :meta, m)}      
+    end
+  end
   def create(attrs \\ %{}) do
     %Observation{}
     |> changeset(attrs)
     |> Repo.insert()
+  end
+
+  defp merge_observation_with_meta(%{comment: _} = observation, id) do
+    Map.put(observation, :observation_meta_id, id)
+  end
+  defp merge_observation_with_meta(%{"comment" => _} = observation, id) do
+    Map.put(observation, "observation_meta_id", id)
   end
 
   @doc """
