@@ -5,12 +5,8 @@ defmodule IclogWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", IclogWeb do
-
+  scope "/api", IclogWeb do
+    pipe_through :api
+    resources "/observation_metas", ObservationMetaController, except: [:new, :edit]
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", IclogWeb do
-  #   pipe_through :api
-  # end
 end
