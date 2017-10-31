@@ -21,7 +21,7 @@ defmodule Iclog.Observable.Sleep do
   def changeset(%Sleep{} = sleep, attrs) do
     sleep
     |> cast(attrs, [:start, :end, :comment])
-    |> validate_required([:start, :end, :comment])
+    |> validate_required([:start, :end])
   end
 
   @doc """
