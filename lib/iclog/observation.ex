@@ -5,7 +5,7 @@ defmodule Iclog.Observation do
   
   alias Iclog.Repo
   alias Iclog.Observation
-  alias Iclog.ObservationMetas.ObservationMeta
+  alias Iclog.ObservationMeta
 
 
   schema "observations" do

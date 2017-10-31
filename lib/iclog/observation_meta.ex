@@ -1,12 +1,25 @@
-defmodule Iclog.ObservationMetas do
-  @moduledoc """
-  The ObservationMetas context.
-  """
-
+defmodule Iclog.ObservationMeta do
+  use Ecto.Schema
+  import Ecto.Changeset
   import Ecto.Query, warn: false
-  alias Iclog.Repo
 
-  alias Iclog.ObservationMetas.ObservationMeta
+  alias Iclog.Repo
+  alias Iclog.ObservationMeta
+
+
+  schema "observation_metas" do
+    field :intro, :string
+    field :title, :string
+
+    timestamps()
+  end
+
+  @doc false
+  def changeset(%ObservationMeta{} = observation_meta, attrs) do
+    observation_meta
+    |> cast(attrs, [:title, :intro])
+    |> validate_required([:title, :intro])
+  end
 
   @doc """
   Returns the list of observation_metas.
@@ -51,7 +64,7 @@ defmodule Iclog.ObservationMetas do
   """
   def create_observation_meta(attrs \\ %{}) do
     %ObservationMeta{}
-    |> ObservationMeta.changeset(attrs)
+    |> changeset(attrs)
     |> Repo.insert()
   end
 
@@ -69,7 +82,7 @@ defmodule Iclog.ObservationMetas do
   """
   def update_observation_meta(%ObservationMeta{} = observation_meta, attrs) do
     observation_meta
-    |> ObservationMeta.changeset(attrs)
+    |> changeset(attrs)
     |> Repo.update()
   end
 
@@ -99,6 +112,6 @@ defmodule Iclog.ObservationMetas do
 
   """
   def change_observation_meta(%ObservationMeta{} = observation_meta) do
-    ObservationMeta.changeset(observation_meta, %{})
+    changeset(observation_meta, %{})
   end
 end

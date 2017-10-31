@@ -1,15 +1,14 @@
 defmodule IclogWeb.ObservationMetaControllerTest do
   use IclogWeb.ConnCase
 
-  alias Iclog.ObservationMetas
-  alias Iclog.ObservationMetas.ObservationMeta
+  alias Iclog.ObservationMeta
 
   @create_attrs %{intro: "some intro", title: "some title"}
   @update_attrs %{intro: "some updated intro", title: "some updated title"}
   @invalid_attrs %{intro: nil, title: nil}
 
   def fixture(:observation_meta) do
-    {:ok, observation_meta} = ObservationMetas.create_observation_meta(@create_attrs)
+    {:ok, observation_meta} = ObservationMeta.create_observation_meta(@create_attrs)
     observation_meta
   end
 
