@@ -18,8 +18,8 @@ defmodule Iclog.Observable.Observation do
   @doc false
   def changeset(%Observation{} = observation, attrs) do
     observation
-    |> cast(attrs, [:comment])
-    |> validate_required([:comment])
+    |> cast(attrs, [:observation_meta_id, :comment])
+    |> validate_required([:observation_meta_id, :comment])
   end
 
   @doc """

@@ -1,11 +1,8 @@
 defmodule IclogWeb.ObservationControllerTest do
   use IclogWeb.ConnCase
+  import Iclog.Observable.Observation.TestHelper
 
   alias Iclog.Observable.Observation
-
-  @create_attrs %{comment: "some comment"}
-  @update_attrs %{comment: "some updated comment"}
-  @invalid_attrs %{comment: nil}
 
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
@@ -20,7 +17,7 @@ defmodule IclogWeb.ObservationControllerTest do
 
   describe "create observation" do
     test "renders observation when data is valid", %{conn: conn} do
-      conn = post conn, observation_path(conn, :create), observation: @create_attrs
+      conn = post conn, observation_path(conn, :create), observation: valid_attrs()
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get conn, observation_path(conn, :show, id)
@@ -30,7 +27,7 @@ defmodule IclogWeb.ObservationControllerTest do
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
-      conn = post conn, observation_path(conn, :create), observation: @invalid_attrs
+      conn = post conn, observation_path(conn, :create), observation: invalid_attrs()
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
@@ -40,18 +37,13 @@ defmodule IclogWeb.ObservationControllerTest do
 
     test "renders observation when data is valid", 
         %{conn: conn, observation: %Observation{id: id} = observation} do
-      conn = put conn, observation_path(conn, :update, observation), observation: @update_attrs
+      conn = put conn, observation_path(conn, :update, observation), observation: update_attrs()
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get conn, observation_path(conn, :show, id)
       assert json_response(conn, 200)["data"] == %{
         "id" => id,
         "comment" => "some updated comment"}
-    end
-
-    test "renders errors when data is invalid", %{conn: conn, observation: observation} do
-      conn = put conn, observation_path(conn, :update, observation), observation: @invalid_attrs
-      assert json_response(conn, 422)["errors"] != %{}
     end
   end
 
@@ -68,7 +60,7 @@ defmodule IclogWeb.ObservationControllerTest do
   end
 
   defp create(_) do
-    {:ok, observation} = Observation.create(@create_attrs)
+    {:ok, observation} = Observation.create(valid_attrs())
     {:ok, observation: observation}
   end
 end
