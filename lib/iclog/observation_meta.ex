@@ -5,11 +5,13 @@ defmodule Iclog.ObservationMeta do
 
   alias Iclog.Repo
   alias Iclog.ObservationMeta
+  alias Iclog.Observation
 
 
   schema "observation_metas" do
     field :intro, :string
     field :title, :string
+    has_many :observations, Observation
 
     timestamps()
   end
