@@ -19,7 +19,7 @@ defmodule Iclog.Observable.Meal do
   def changeset(%Meal{} = meal, attrs) do
     meal
     |> cast(attrs, [:meal, :time, :comment])
-    |> validate_required([:meal, :time, :comment])
+    |> validate_required([:meal, :time])
   end
 
   @doc """
