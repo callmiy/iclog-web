@@ -1,7 +1,7 @@
-defmodule Iclog.ObservationsTest do
+defmodule Iclog.Observable.ObservationTest do
   use Iclog.DataCase
 
-  alias Iclog.Observation
+  alias Iclog.Observable.Observation
 
     @valid_attrs %{comment: "some comment"}
     @update_attrs %{comment: "some updated comment"}

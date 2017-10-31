@@ -1,7 +1,7 @@
 defmodule IclogWeb.ObservationController do
   use IclogWeb, :controller
 
-  alias Iclog.Observation
+  alias Iclog.Observable.Observation
 
   action_fallback IclogWeb.FallbackController
 

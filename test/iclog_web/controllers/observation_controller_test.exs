@@ -1,7 +1,7 @@
 defmodule IclogWeb.ObservationControllerTest do
   use IclogWeb.ConnCase
 
-  alias Iclog.Observation
+  alias Iclog.Observable.Observation
 
   @create_attrs %{comment: "some comment"}
   @update_attrs %{comment: "some updated comment"}
@@ -43,7 +43,8 @@ defmodule IclogWeb.ObservationControllerTest do
   describe "update observation" do
     setup [:create_observation]
 
-    test "renders observation when data is valid", %{conn: conn, observation: %Observation{id: id} = observation} do
+    test "renders observation when data is valid", 
+        %{conn: conn, observation: %Observation{id: id} = observation} do
       conn = put conn, observation_path(conn, :update, observation), observation: @update_attrs
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
