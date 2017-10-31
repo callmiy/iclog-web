@@ -7,11 +7,6 @@ defmodule IclogWeb.ObservationMetaControllerTest do
   @update_attrs %{intro: "some updated intro", title: "some updated title"}
   @invalid_attrs %{intro: nil, title: nil}
 
-  def fixture(:observation_meta) do
-    {:ok, observation_meta} = ObservationMeta.create_observation_meta(@create_attrs)
-    observation_meta
-  end
-
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
@@ -42,9 +37,10 @@ defmodule IclogWeb.ObservationMetaControllerTest do
   end
 
   describe "update observation_meta" do
-    setup [:create_observation_meta]
+    setup [:create]
 
-    test "renders observation_meta when data is valid", %{conn: conn, observation_meta: %ObservationMeta{id: id} = observation_meta} do
+    test "renders observation_meta when data is valid",
+        %{conn: conn, observation_meta: %ObservationMeta{id: id} = observation_meta} do
       conn = put conn, observation_meta_path(conn, :update, observation_meta), observation_meta: @update_attrs
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
@@ -62,7 +58,7 @@ defmodule IclogWeb.ObservationMetaControllerTest do
   end
 
   describe "delete observation_meta" do
-    setup [:create_observation_meta]
+    setup [:create]
 
     test "deletes chosen observation_meta", %{conn: conn, observation_meta: observation_meta} do
       conn = delete conn, observation_meta_path(conn, :delete, observation_meta)
@@ -73,8 +69,8 @@ defmodule IclogWeb.ObservationMetaControllerTest do
     end
   end
 
-  defp create_observation_meta(_) do
-    observation_meta = fixture(:observation_meta)
+  defp create(_) do
+    {:ok, observation_meta} = ObservationMeta.create(@create_attrs)
     {:ok, observation_meta: observation_meta}
   end
 end

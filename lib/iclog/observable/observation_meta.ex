@@ -28,11 +28,11 @@ defmodule Iclog.Observable.ObservationMeta do
 
   ## Examples
 
-      iex> list_observation_metas()
+      iex> list()
       [%ObservationMeta{}, ...]
 
   """
-  def list_observation_metas do
+  def list do
     Repo.all(ObservationMeta)
   end
 
@@ -43,28 +43,28 @@ defmodule Iclog.Observable.ObservationMeta do
 
   ## Examples
 
-      iex> get_observation_meta!(123)
+      iex> get!(123)
       %ObservationMeta{}
 
-      iex> get_observation_meta!(456)
+      iex> get!(456)
       ** (Ecto.NoResultsError)
 
   """
-  def get_observation_meta!(id), do: Repo.get!(ObservationMeta, id)
+  def get!(id), do: Repo.get!(ObservationMeta, id)
 
   @doc """
   Creates a observation_meta.
 
   ## Examples
 
-      iex> create_observation_meta(%{field: value})
+      iex> create(%{field: value})
       {:ok, %ObservationMeta{}}
 
-      iex> create_observation_meta(%{field: bad_value})
+      iex> create(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_observation_meta(attrs \\ %{}) do
+  def create(attrs \\ %{}) do
     %ObservationMeta{}
     |> changeset(attrs)
     |> Repo.insert()
@@ -75,14 +75,14 @@ defmodule Iclog.Observable.ObservationMeta do
 
   ## Examples
 
-      iex> update_observation_meta(observation_meta, %{field: new_value})
+      iex> update(observation_meta, %{field: new_value})
       {:ok, %ObservationMeta{}}
 
-      iex> update_observation_meta(observation_meta, %{field: bad_value})
+      iex> update(observation_meta, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_observation_meta(%ObservationMeta{} = observation_meta, attrs) do
+  def update(%ObservationMeta{} = observation_meta, attrs) do
     observation_meta
     |> changeset(attrs)
     |> Repo.update()
@@ -93,14 +93,14 @@ defmodule Iclog.Observable.ObservationMeta do
 
   ## Examples
 
-      iex> delete_observation_meta(observation_meta)
+      iex> delete(observation_meta)
       {:ok, %ObservationMeta{}}
 
-      iex> delete_observation_meta(observation_meta)
+      iex> delete(observation_meta)
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_observation_meta(%ObservationMeta{} = observation_meta) do
+  def delete(%ObservationMeta{} = observation_meta) do
     Repo.delete(observation_meta)
   end
 
@@ -109,11 +109,11 @@ defmodule Iclog.Observable.ObservationMeta do
 
   ## Examples
 
-      iex> change_observation_meta(observation_meta)
+      iex> change(observation_meta)
       %Ecto.Changeset{source: %ObservationMeta{}}
 
   """
-  def change_observation_meta(%ObservationMeta{} = observation_meta) do
+  def change(%ObservationMeta{} = observation_meta) do
     changeset(observation_meta, %{})
   end
 end
