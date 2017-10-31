@@ -10,5 +10,6 @@ defmodule IclogWeb.Router do
     resources "/observation_metas", ObservationMetaController, except: [:new, :edit]
     resources "/observations", ObservationController, except: [:new, :edit]
     resources "/sleeps", SleepController, except: [:new, :edit]
+    resources "/meals", MealController, except: [:new, :edit]
   end
 end
