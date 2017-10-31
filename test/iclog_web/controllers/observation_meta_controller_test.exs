@@ -1,7 +1,7 @@
 defmodule IclogWeb.ObservationMetaControllerTest do
   use IclogWeb.ConnCase
 
-  alias Iclog.ObservationMeta
+  alias Iclog.Observable.ObservationMeta
 
   @create_attrs %{intro: "some intro", title: "some title"}
   @update_attrs %{intro: "some updated intro", title: "some updated title"}

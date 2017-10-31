@@ -1,10 +1,10 @@
-defmodule Iclog.ObservationMeta do
+defmodule Iclog.Observable.ObservationMeta do
   use Ecto.Schema
   import Ecto.Changeset
   import Ecto.Query, warn: false
 
   alias Iclog.Repo
-  alias Iclog.ObservationMeta
+  alias Iclog.Observable.ObservationMeta
   alias Iclog.Observation
 
 

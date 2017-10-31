@@ -1,7 +1,7 @@
-defmodule Iclog.ObservationMetasTest do
+defmodule Iclog.Observable.ObservationMetasTest do
   use Iclog.DataCase
 
-  alias Iclog.ObservationMeta
+  alias Iclog.Observable.ObservationMeta
 
     @valid_attrs %{intro: "some intro", title: "some title"}
     @update_attrs %{intro: "some updated intro", title: "some updated title"}
