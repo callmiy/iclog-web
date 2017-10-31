@@ -8,5 +8,6 @@ defmodule IclogWeb.Router do
   scope "/api", IclogWeb do
     pipe_through :api
     resources "/observation_metas", ObservationMetaController, except: [:new, :edit]
+    resources "/observations", ObservationController, except: [:new, :edit]
   end
 end
