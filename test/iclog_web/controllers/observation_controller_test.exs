@@ -7,11 +7,6 @@ defmodule IclogWeb.ObservationControllerTest do
   @update_attrs %{comment: "some updated comment"}
   @invalid_attrs %{comment: nil}
 
-  def fixture(:observation) do
-    {:ok, observation} = Observation.create_observation(@create_attrs)
-    observation
-  end
-
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
@@ -41,7 +36,7 @@ defmodule IclogWeb.ObservationControllerTest do
   end
 
   describe "update observation" do
-    setup [:create_observation]
+    setup [:create]
 
     test "renders observation when data is valid", 
         %{conn: conn, observation: %Observation{id: id} = observation} do
@@ -61,7 +56,7 @@ defmodule IclogWeb.ObservationControllerTest do
   end
 
   describe "delete observation" do
-    setup [:create_observation]
+    setup [:create]
 
     test "deletes chosen observation", %{conn: conn, observation: observation} do
       conn = delete conn, observation_path(conn, :delete, observation)
@@ -72,8 +67,8 @@ defmodule IclogWeb.ObservationControllerTest do
     end
   end
 
-  defp create_observation(_) do
-    observation = fixture(:observation)
+  defp create(_) do
+    {:ok, observation} = Observation.create(@create_attrs)
     {:ok, observation: observation}
   end
 end

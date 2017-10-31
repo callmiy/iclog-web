@@ -27,11 +27,11 @@ defmodule Iclog.Observable.Observation do
 
   ## Examples
 
-      iex> list_observations()
+      iex> list()
       [%Observation{}, ...]
 
   """
-  def list_observations do
+  def list do
     Repo.all(Observation)
   end
 
@@ -42,28 +42,28 @@ defmodule Iclog.Observable.Observation do
 
   ## Examples
 
-      iex> get_observation!(123)
+      iex> get!(123)
       %Observation{}
 
-      iex> get_observation!(456)
+      iex> get!(456)
       ** (Ecto.NoResultsError)
 
   """
-  def get_observation!(id), do: Repo.get!(Observation, id)
+  def get!(id), do: Repo.get!(Observation, id)
 
   @doc """
   Creates a observation.
 
   ## Examples
 
-      iex> create_observation(%{field: value})
+      iex> create(%{field: value})
       {:ok, %Observation{}}
 
-      iex> create_observation(%{field: bad_value})
+      iex> create(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_observation(attrs \\ %{}) do
+  def create(attrs \\ %{}) do
     %Observation{}
     |> changeset(attrs)
     |> Repo.insert()
@@ -74,14 +74,14 @@ defmodule Iclog.Observable.Observation do
 
   ## Examples
 
-      iex> update_observation(observation, %{field: new_value})
+      iex> update(observation, %{field: new_value})
       {:ok, %Observation{}}
 
-      iex> update_observation(observation, %{field: bad_value})
+      iex> update(observation, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_observation(%Observation{} = observation, attrs) do
+  def update(%Observation{} = observation, attrs) do
     observation
     |> changeset(attrs)
     |> Repo.update()
@@ -92,14 +92,14 @@ defmodule Iclog.Observable.Observation do
 
   ## Examples
 
-      iex> delete_observation(observation)
+      iex> delete(observation)
       {:ok, %Observation{}}
 
-      iex> delete_observation(observation)
+      iex> delete(observation)
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_observation(%Observation{} = observation) do
+  def delete(%Observation{} = observation) do
     Repo.delete(observation)
   end
 
@@ -108,11 +108,11 @@ defmodule Iclog.Observable.Observation do
 
   ## Examples
 
-      iex> change_observation(observation)
+      iex> change(observation)
       %Ecto.Changeset{source: %Observation{}}
 
   """
-  def change_observation(%Observation{} = observation) do
+  def change(%Observation{} = observation) do
     changeset(observation, %{})
   end
 end
