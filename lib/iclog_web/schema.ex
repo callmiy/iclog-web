@@ -1,8 +1,8 @@
-defmodule Iclog.Schema do
+defmodule IclogWeb.Schema do
   use Absinthe.Schema
 
-  import_types Iclog.Observable.Schema.Observation
-  import_types Iclog.Observable.Schema.ObservationMeta
+  import_types IclogWeb.Schema.Observation
+  import_types IclogWeb.Schema.ObservationMeta
 
   query do
     import_fields :observation_query

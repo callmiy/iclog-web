@@ -1,4 +1,4 @@
-defmodule Iclog.Observable.Schema.ObservationMeta do
+defmodule IclogWeb.Schema.ObservationMeta do
   @moduledoc """
   Schema types
   """

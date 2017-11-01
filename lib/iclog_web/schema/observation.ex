@@ -1,4 +1,4 @@
-defmodule Iclog.Observable.Schema.Observation do
+defmodule IclogWeb.Schema.Observation do
   @moduledoc """
   Schema types
   """
@@ -6,10 +6,12 @@ defmodule Iclog.Observable.Schema.Observation do
   use Absinthe.Schema.Notation
 
   alias Iclog.Observable.Observation
+  alias IclogWeb.ChangesetView
+  alias Phoenix.View
 
   @desc "An observation"
   object :observation do
-    field :id, :id
+    field :id, :integer
     field :comment, :string
     field :meta, :observation_meta
   end
@@ -42,8 +44,15 @@ defmodule Iclog.Observable.Schema.Observation do
 
       resolve fn(params, _) -> 
         {m_params, o_params} = Map.pop( params, :meta)
-        Observation.create(o_params, m_params)
+        
+        with {:ok, data} <- Observation.create(o_params, m_params) do
+          {:ok, data} # {:ok, %{data: ..}}
+        else
+          {:error, changeset} ->
+            {:ok,  View.render(ChangesetView, "error.json", changeset: changeset)} # {:ok, %{errors: ....}}
+        end
       end
+
     end
   end 
 end
