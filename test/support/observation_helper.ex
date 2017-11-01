@@ -26,4 +26,42 @@ defmodule Iclog.Observable.Observation.TestHelper do
 
     observation
   end
+
+  def valid_query(:observation_query) do
+    """
+    {
+      observations {
+        id
+      }
+    }
+    """
+  end
+
+  def valid_query(:Observation_mutation_with_meta) do
+    """
+    mutation createObservationAndMeta {
+      observationWithMeta(
+        comment: "some comment",
+        meta: {title: "nice title"}
+      ) {
+        id
+        meta {
+          id
+        }
+      }
+    }
+    """
+  end
+
+  def invalid_query(:Observation_mutation_with_meta) do
+    """
+    mutation createObservationAndMeta {
+      observationWithMeta(
+        meta: {title: "nice title"}
+      ) {
+        id
+      }
+    }
+    """
+  end
 end

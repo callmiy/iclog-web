@@ -91,6 +91,9 @@ defmodule Iclog.Observable.Observation do
   defp merge_observation_with_meta(%{"comment" => _} = observation, id) do
     Map.put(observation, "observation_meta_id", id)
   end
+  defp merge_observation_with_meta(_, id) do
+    %{observation_meta_id: id}
+  end
 
   @doc """
   Updates a observation.

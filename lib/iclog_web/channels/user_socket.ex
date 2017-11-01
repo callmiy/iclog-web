@@ -2,7 +2,7 @@ defmodule IclogWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  # channel "room:*", IclogWeb.RoomChannel
+  channel "observation:*", IclogWeb.ObservationChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket
