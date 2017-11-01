@@ -5,7 +5,6 @@ defmodule Iclog.Observable.ObservationTest do
   alias Iclog.Observable.Observation
   alias Iclog.Observable.ObservationMeta.TestHelper, as: ObservationMetaHelper
   alias Iclog.Observable.ObservationMeta
-  alias Iclog.Schema
 
   describe "observation" do
     test "list/0 returns all observations" do
@@ -61,37 +60,5 @@ defmodule Iclog.Observable.ObservationTest do
       observation = fixture()
       assert %Ecto.Changeset{} = Observation.change(observation)
     end
-  end
-
-  describe "observation schema" do
-    test ":observation_query" do
-      %Observation{id: id} = fixture()
-
-      assert{:ok, %{data: %{"observations" => [%{"id" => _}]}}} =
-        """
-        {
-          observations {
-            id
-          }
-        }
-        """
-          |> Absinthe.run(Schema)
-    end
-
-    test ":Observation_mutation_with_meta" do
-      assert {:ok, %{data: %{"observationWithMeta" => %{"id" => _} } }} =
-        """
-        mutation createObservationAndMeta {
-          observationWithMeta(
-            comment: "some comment",
-            meta: {title: "nice title"}
-          ) {
-            id
-          }
-        }
-        """
-          |> Absinthe.run(Schema)
-    end
-  end
-  
+  end  
 end
