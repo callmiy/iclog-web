@@ -1,0 +1,18 @@
+{
+  "parser": "babel-eslint",
+  "extends": [
+    "airbnb-base/legacy"
+  ],
+  "plugins": [],
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "rules": {
+    "arrow-parens": [
+      2,
+      "always"
+    ]
+  }
+}
