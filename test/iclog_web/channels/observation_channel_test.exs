@@ -14,18 +14,29 @@ defmodule IclogWeb.ObservationChannelTest do
   end
 
   test "new_observation replies with status ok, observation and meta", %{socket: socket} do
+    {query, params} = valid_query(:Observation_mutation_with_meta)
+
     ref = push socket, "new_observation", %{ 
       "with_meta" => "yes",
-      "query" => valid_query(:Observation_mutation_with_meta)
+      "query" => query,
+      "params" => params
     }
 
-    assert_reply ref, :ok, %{data:  %{"observationWithMeta" => %{"id" => _, "meta" => _}}}, 300
+    assert_reply(
+      ref,
+      :ok,
+      %{data:  %{"observationWithMeta" => %{"id" => _, "meta" => _}}},
+      300
+    )
   end
 
   test "new_observation replies with status error", %{socket: socket} do
+    {query, params} = invalid_query(:Observation_mutation_with_meta)
+
     ref = push socket, "new_observation", %{ 
       "with_meta" => "yes",
-      "query" => invalid_query(:Observation_mutation_with_meta)
+      "query" => query,
+      "params" => params
     }
 
     assert_reply ref, :error, %{errors:  _}, 300

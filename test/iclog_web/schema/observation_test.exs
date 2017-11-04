@@ -16,13 +16,17 @@ defmodule IclogWeb.Schema.ObservationTest do
 
   describe "mutation" do
     test ":Observation_mutation_with_meta succeeds" do
+      {query, params} = valid_query(:Observation_mutation_with_meta)
+
       assert {:ok, %{data: %{"observationWithMeta" => %{"id" => _} } }} =
-        Absinthe.run(valid_query(:Observation_mutation_with_meta), Schema)
+        Absinthe.run(query, Schema, variables: params)
     end
 
     test ":Observation_mutation_with_meta errors" do
+      {query, params} = invalid_query(:Observation_mutation_with_meta)
+
       assert {:ok, %{errors: _}} =
-        Absinthe.run(invalid_query(:Observation_mutation_with_meta), Schema)
+        Absinthe.run(query, Schema, variables: params)
     end
   end
   

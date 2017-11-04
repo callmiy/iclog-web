@@ -38,30 +38,47 @@ defmodule Iclog.Observable.Observation.TestHelper do
   end
 
   def valid_query(:Observation_mutation_with_meta) do
-    """
-    mutation createObservationAndMeta {
-      observationWithMeta(
-        comment: "some comment",
-        meta: {title: "nice title"}
-      ) {
-        id
-        meta {
+    query = """
+      mutation createObservationAndMeta ($comment: String!, $meta: Meta!) {
+        observationWithMeta(
+          comment: $comment,
+          meta: $meta
+        ) {
           id
+          meta {
+            id
+          }
         }
       }
-    }
     """
+
+    params = %{
+      "comment" => "some comment",
+      "meta" => %{"title" => "nice title"}
+    }
+
+    {query, params}
   end
 
   def invalid_query(:Observation_mutation_with_meta) do
-    """
-    mutation createObservationAndMeta {
-      observationWithMeta(
-        meta: {title: "nice title"}
-      ) {
-        id
+    query = """
+      mutation createObservationAndMeta ($comment: String!, $meta: Meta!) {
+        observationWithMeta(
+          comment: $comment,
+          meta: $meta
+        ) {
+          id
+          meta {
+            id
+          }
+        }
       }
-    }
     """
+
+    params = %{
+      "comment" => "some comment"
+    }
+
+    {query, params}
   end
 end

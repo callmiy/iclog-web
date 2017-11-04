@@ -31,7 +31,7 @@ defmodule IclogWeb.Schema.Observation do
     end
   end
 
-  input_object :meta_input do
+  input_object :meta do
     field :title, non_null(:string)
     field :intro, :string
   end
@@ -40,7 +40,7 @@ defmodule IclogWeb.Schema.Observation do
   object :Observation_mutation_with_meta do
     field :observation_with_meta, type: :observation do
       arg :comment, non_null(:string)
-      arg :meta, non_null(:meta_input)
+      arg :meta, non_null(:meta)
 
       resolve fn(params, _) -> 
         {m_params, o_params} = Map.pop( params, :meta)
