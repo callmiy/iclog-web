@@ -32,6 +32,14 @@ defmodule Iclog.Observable.Observation.TestHelper do
     {
       observations {
         id
+        comment
+        insertedAt
+        updatedAt
+        meta {
+          id
+          title
+          intro
+        }
       }
     }
     """

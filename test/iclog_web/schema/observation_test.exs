@@ -9,8 +9,27 @@ defmodule IclogWeb.Schema.ObservationTest do
     test ":observation_query" do
       %Observation{id: id} = fixture()
 
-      assert{:ok, %{data: %{"observations" => [%{"id" => ^id}]}}} =
-        Absinthe.run(valid_query(:observation_query), Schema)
+      assert {
+          :ok,
+          %{data:
+              %{
+                  "observations" => [
+                    %{
+                      "id" => ^id,
+                      "comment" => _,
+                      "insertedAt" => _,
+                      "updatedAt" => _,
+                      "meta" => %{
+                        "id" => _,
+                        "title" => _,
+                        "intro" => _
+                      }
+                    }
+                  ]
+              }
+          }
+      } = Absinthe.run(valid_query(:observation_query), Schema)
+        
     end
   end
 

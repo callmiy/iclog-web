@@ -14,6 +14,8 @@ defmodule IclogWeb.Schema.Observation do
     field :id, :integer
     field :comment, :string
     field :meta, :observation_meta
+    field :inserted_at, :timex_datetime
+    field :updated_at, :timex_datetime
   end
 
   object :observation_query do
