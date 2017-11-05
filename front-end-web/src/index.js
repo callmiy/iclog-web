@@ -1,4 +1,10 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'font-awesome/css/font-awesome.min.css';
+import 'semantic-ui-css/semantic.min.css';
+import './main1.css';
 import './main.css';
+import 'jquery'
+import 'bootstrap'
 import { Main } from './Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
