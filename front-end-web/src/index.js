@@ -3,8 +3,9 @@ import 'font-awesome/css/font-awesome.min.css';
 import 'semantic-ui-css/semantic.min.css';
 import './main1.css';
 import './main.css';
-import 'jquery'
-import 'bootstrap'
+import './style.css';
+import $ from 'jquery';
+import 'bootstrap';
 import { Main } from './Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
@@ -32,5 +33,9 @@ const flags = {
 };
 
 Main.embed(document.getElementById('root'), flags);
+
+$(function applyJquery() {
+  $('[data-toggle="tooltip"]').tooltip();
+});
 
 registerServiceWorker();

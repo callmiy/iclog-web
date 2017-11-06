@@ -4,7 +4,7 @@ import Html exposing (Html, div, text, nav, button, span, a, form, input, ul, li
 import Html.Attributes as Attr exposing (class, type_, href, id, placeholder)
 import Model exposing (Model, Msg)
 import Page exposing (Page)
-import Observation.Model as Observation
+import Observation.View as ObservationView
 
 
 view : Model -> Html Msg
@@ -45,7 +45,7 @@ viewPage : Page -> Model -> Html Msg
 viewPage page model =
     case page of
         Page.Observation subModel ->
-            Html.map Model.ObservationMsg <| Observation.view subModel
+            Html.map Model.ObservationMsg <| ObservationView.view subModel
 
 
 navigation : Html msg

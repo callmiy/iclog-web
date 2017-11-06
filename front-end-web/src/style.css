@@ -1,0 +1,18 @@
+.observationNewMeta {
+    border: 1px solid #434857 !important;
+    padding: 0.6rem 0.2rem 0rem 0.2rem !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: 5px !important;
+    position: relative !important;
+}
+
+.observationNewMetaLegend {
+    position: absolute;
+    left: 3px;
+    top: -10px;
+}
+
+.observationNewMetaDismiss {
+    min-width: 100%;
+    cursor: pointer;
+}

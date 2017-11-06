@@ -7,6 +7,7 @@ module Views.FormUtils
         , textualError
         , joinErrors
         , textualErrorBox
+        , formControlValidator
         )
 
 import Html exposing (..)
@@ -23,14 +24,12 @@ styles =
     Css.asPairs >> Attr.style
 
 
-formGrp :
-    Input e String
-    -> FieldState e String
-    -> List (Attribute Form.Msg)
-    -> Maybe String
-    -> (Form.Msg -> msg)
-    -> Html msg
-formGrp control state additionalAttributes otherErrors msg =
+formControlValidator :
+    FieldState e String
+    -> List (Attribute msg)
+    -> Maybe a
+    -> ( List (Attribute msg), Bool, Maybe (ErrorValue e) )
+formControlValidator state additionalAttributes otherErrors =
     let
         attributes =
             [ Attr.classList
@@ -53,13 +52,27 @@ formGrp control state additionalAttributes otherErrors msg =
         isInvalid =
             isInvalid_ || (otherErrors /= Nothing)
     in
+        ( attributes, isInvalid, error )
+
+
+formGrp :
+    Input e String
+    -> FieldState e String
+    -> List (Attribute Form.Msg)
+    -> Maybe String
+    -> (Form.Msg -> msg)
+    -> Html msg
+formGrp control state additionalAttributes otherErrors msg =
+    let
+        ( attributes, isInvalid, error ) =
+            formControlValidator state additionalAttributes otherErrors
+    in
         Html.map msg <|
             div
                 [ Attr.classList
                     [ ( "blj has-success", True )
                     , ( "error", isInvalid )
                     ]
-                , styles [ Css.marginBottom (Css.px 8) ]
                 ]
                 [ control state attributes
                 , errorMessage error isInvalid
