@@ -48,7 +48,7 @@ defmodule Iclog.Observable.Observation.TestHelper do
   def valid_query(:Observation_mutation_with_meta) do
     query = """
       mutation createObservationAndMeta ($comment: String!, $meta: Meta!) {
-        observationWithMeta(
+        observationMutationWithMeta(
           comment: $comment,
           meta: $meta
         ) {
@@ -71,7 +71,7 @@ defmodule Iclog.Observable.Observation.TestHelper do
   def invalid_query(:Observation_mutation_with_meta) do
     query = """
       mutation createObservationAndMeta ($comment: String!, $meta: Meta!) {
-        observationWithMeta(
+        observationMutationWithMeta(
           comment: $comment,
           meta: $meta
         ) {

@@ -39,8 +39,8 @@ defmodule IclogWeb.Schema.Observation do
   end
 
   @desc "Create an observation with its metadata simulatenously"
-  object :Observation_mutation_with_meta do
-    field :observation_with_meta, type: :observation do
+  object :Observation_mutations do
+    field :observation_mutation_with_meta, type: :observation do
       arg :comment, non_null(:string)
       arg :meta, non_null(:meta)
 

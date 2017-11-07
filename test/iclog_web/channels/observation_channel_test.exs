@@ -25,7 +25,7 @@ defmodule IclogWeb.ObservationChannelTest do
     assert_reply(
       ref,
       :ok,
-      %{data:  %{"observationWithMeta" => %{"id" => _, "meta" => _}}},
+      %{data:  %{"observationMutationWithMeta" => %{"id" => _, "meta" => _}}},
       300
     )
   end

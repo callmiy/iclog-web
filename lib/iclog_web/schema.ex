@@ -10,6 +10,6 @@ defmodule IclogWeb.Schema do
   end
 
   mutation do
-    import_fields :Observation_mutation_with_meta
+    import_fields :Observation_mutations
   end
 end
