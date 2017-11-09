@@ -1,4 +1,9 @@
 /* global body padding */
+html, body {
+  height: 100vh;
+}
+
+
 body {
   padding-top:    20px;
   padding-bottom: 20px;
@@ -9,6 +14,16 @@ body {
     padding-top:    50px;
     padding-bottom: 50px;
   }
+}
+
+#root{
+  height: 100vh;
+}
+
+.card{
+  box-shadow:   0 1px 0 rgba(0, 0, 0, 0.25);
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
 }
 
 
@@ -40,7 +55,7 @@ button[disabled]{
   margin-bottom: 8px;
 }
 
-.custom-select.is-invalid, 
+.custom-select.is-invalid,
 .form-control.is-invalid,
 .was-validated .custom-select:invalid,
 .was-validated .form-control:invalid {
@@ -53,3 +68,5 @@ button[disabled]{
 .was-validated .form-control:valid {
   border-color: #28a745 !important;
 }
+
+

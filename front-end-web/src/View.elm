@@ -36,7 +36,7 @@ view ({ pageState } as model) =
                             []
                         ]
                     ]
-                , div [ class "page-content iw" ] [ viewPage page model ]
+                , viewPage page model
                 ]
             ]
 

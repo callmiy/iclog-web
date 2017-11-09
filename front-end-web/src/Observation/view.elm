@@ -17,7 +17,7 @@ styles =
 view : Model -> Html Msg
 view ({ showing } as model) =
     Html.div
-        []
+        [ styles [ Css.height (Css.pct 100) ] ]
         [ Html.div
             [ styles
                 [ Css.marginBottom (Css.rem 0.75)
@@ -48,8 +48,9 @@ changeViewIcon : String -> String -> Msg -> Html Msg
 changeViewIcon title classNames msg =
     Html.i
         [ Attr.class classNames
-        , Attr.attribute "data-toggle" "tooltip"
-        , Attr.attribute "data-placement" "bottom"
+
+        -- , Attr.attribute "data-toggle" "tooltip"
+        -- , Attr.attribute "data-placement" "bottom"
         , Attr.attribute "title" title
         , Attr.attribute "aria-hidden" "true"
         , onClick msg

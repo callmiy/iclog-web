@@ -47,7 +47,7 @@ update msg model =
 
 view : FromParent -> Model -> Html Msg
 view ({ observations } as fromParent) model =
-    Html.div [] [ viewTable observations.entries ]
+    viewTable observations.entries
 
 
 viewTable : List Observation -> Html Msg
@@ -57,7 +57,9 @@ viewTable observations =
         [ Html.table
             [ Attr.class "ck", Attr.attribute "data-sort" "table" ]
             [ viewHeader
-            , Html.tbody [] (List.map viewObservationRow observations)
+            , Html.tbody
+                []
+                (List.map viewObservationRow observations)
             ]
         ]
 
