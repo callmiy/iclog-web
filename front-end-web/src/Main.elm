@@ -44,10 +44,7 @@ phoenixSubscription ({ store, pageState } as model) =
                 channels =
                     case page of
                         Page.Observation _ ->
-                            [ Channel.map
-                                (Model.ObservationMsg << Observation.ChannelMsg)
-                                ObservationChannel.channel
-                            ]
+                            [ Channel.map Model.ObservationMsg Observation.channels ]
             in
                 Phoenix.connect (socket url) channels
 

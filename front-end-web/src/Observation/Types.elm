@@ -9,11 +9,14 @@ module Observation.Types
         , emptyCreateMeta
         )
 
+import Date exposing (Date)
+
 
 type alias Observation =
     { id : String
     , comment : String
     , meta : Meta
+    , insertedAt : Date
     }
 
 

@@ -6,12 +6,35 @@ defmodule IclogWeb.ObservationChannelTest do
   alias IclogWeb.ObservationChannel
   alias Iclog.Observable.ObservationMeta.TestHelper, as: ObmHelper
 
-  defp init(_) do
-    {:ok, _, socket} =
-    socket("user_id", %{some: :assign})
-    |> subscribe_and_join(ObservationChannel, "observation:observation")
+  defp createObservation(_) do
+    {:ok, observation: insert(:observation)}
+  end
 
-    {:ok, socket: socket}
+  defp init(_) do
+    {query, params} = valid_query(:paginated_observations)
+
+    {:ok, response, socket} =
+    socket("user_id", %{some: :assign})
+    |> subscribe_and_join(
+        ObservationChannel,
+        "observation:observation",
+        %{"query" => query, "params" => params}
+      )
+
+    {:ok, socket: socket, socket_response: response}
+  end
+
+  describe "socket response" do
+    setup [:createObservation, :init]
+
+    test "socket response", %{socket_response: response} do
+      assert %{
+        data: %{"paginatedObservations" => %{
+          "entries" => [%{}],
+          "pagination" => %{},
+        }}
+      } = response
+    end
   end
 
   describe "new_observation" do
@@ -79,7 +102,7 @@ defmodule IclogWeb.ObservationChannelTest do
     setup([:init])
 
     test "search_metas_by_title replies with status ok and  metas", %{socket: socket} do
-      fixture(valid_attrs(:with_meta))
+      insert(:observation)
 
       {query, params} = ObmHelper.valid_query(:observation_metas_by_title_query)
 

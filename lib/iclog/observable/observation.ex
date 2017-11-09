@@ -2,10 +2,11 @@ defmodule Iclog.Observable.Observation do
   use Ecto.Schema
   import Ecto.Changeset
   import Ecto.Query, warn: false
-  
+
   alias Iclog.Repo
   alias Iclog.Observable.Observation
   alias Iclog.Observable.ObservationMeta
+  alias IclogWeb.PaginationHelper
 
 
   schema "observations" do
@@ -33,10 +34,21 @@ defmodule Iclog.Observable.Observation do
       iex> list(:with_meta)
 
   """
-  def list(:with_meta) do
-    Repo.all from observation in Observation,
+  def list(:with_meta, params \\ nil) do
+    query = from observation in Observation,
       join: meta in assoc(observation, :observation_meta),
+      order_by: [desc: observation.inserted_at, desc: observation.id],
       preload: [observation_meta: meta]
+
+    if params == nil do
+      Repo.all(query)
+    else
+      page = Repo.paginate(query, params)
+      %{
+        entries: page.entries,
+        pagination: PaginationHelper.page_to_map(page)
+      }
+    end
   end
   def list do
     Repo.all(Observation)
@@ -76,7 +88,7 @@ defmodule Iclog.Observable.Observation do
   def create(attrs, meta) do
     with {:ok, %ObservationMeta{} = m} <- ObservationMeta.create(meta),
           {:ok, %Observation{} = o} <- create(merge_observation_with_meta(attrs, m.id) ) do
-      {:ok, Map.put(o, :meta, m)}      
+      {:ok, Map.put(o, :meta, m)}
     end
   end
   def create(attrs \\ %{}) do

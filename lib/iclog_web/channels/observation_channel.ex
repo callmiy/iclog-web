@@ -3,8 +3,9 @@ defmodule IclogWeb.ObservationChannel do
 
   alias IclogWeb.Schema
 
-  def join("observation:observation", _params, socket) do
-    {:ok, socket}
+  def join("observation:observation", %{"params" => params, "query" => query}, socket) do
+    {_, reply} = Absinthe.run(query, Schema, variables: params)
+    {:ok, absinthe_response(reply), socket}
   end
 
   def handle_in(

@@ -8,6 +8,7 @@
     ],
     "exposed-modules": [],
     "dependencies": {
+        "FabienHenon/elm-infinite-scroll": "2.3.0 <= v < 3.0.0",
         "elm-community/json-extra": "2.6.0 <= v < 3.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0",
         "elm-lang/dom": "1.1.1 <= v < 2.0.0",
@@ -15,6 +16,7 @@
         "etaque/elm-form": "3.0.0 <= v < 4.0.0",
         "jamesmacaulay/elm-graphql": "1.6.1 <= v < 2.0.0",
         "krisajenkins/elm-dialog": "4.0.3 <= v < 5.0.0",
+        "mgold/elm-date-format": "1.4.1 <= v < 2.0.0",
         "rtfeldman/elm-css": "11.2.0 <= v < 12.0.0",
         "rtfeldman/elm-css-helpers": "2.1.0 <= v < 3.0.0",
         "saschatimme/elm-phoenix": "0.3.1 <= v < 1.0.0",

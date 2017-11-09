@@ -2,67 +2,71 @@ module Observation.App
     exposing
         ( Model
         , Msg(..)
+        , App(..)
+        , Showing(..)
         , init
         , update
         , queryStore
         , subscriptions
+        , channels
         )
 
-import Form exposing (Form, FieldState)
-import Form.Field as Field exposing (Field)
-import Form.Validate as Validate exposing (Validation)
-import Phoenix
 import Store exposing (Store)
-import Observation.Types exposing (Observation, Meta, CreateObservationWithMeta, CreateMeta, emptyMeta, emptyString)
-import Observation.MetaAutocomplete as MetaAutocomplete
-import Observation.Channel as Channel exposing (ChannelState)
+import Observation.New.App as New
+import Observation.Channel as ObservationChannel exposing (ChannelState, PaginatedObservations)
+import Observation.List.App as ListApp
+import Phoenix.Channel as Channel exposing (Channel)
+import Utils as GUtils exposing (defaultPagination)
 
 
 subscriptions : Model -> Sub Msg
-subscriptions ({ metaAutoComp } as model) =
+subscriptions ({ showing } as model) =
     Sub.batch
-        [ MetaAutocomplete.subscriptions metaAutoComp
-            |> Sub.map MetaAutocompleteMsg
+        [ case showing of
+            ShowNew subModel ->
+                New.subscriptions subModel |> Sub.map NewMsg
+
+            ShowList _ ->
+                Sub.none
         ]
 
 
+channels : Channel Msg
+channels =
+    Channel.map ChannelMsg ObservationChannel.channel
+
+
+type Showing
+    = ShowNew New.Model
+    | ShowList ListApp.Model
+
+
+type App
+    = NewApp
+    | ListApp_
+
+
 type alias Model =
-    { form : Maybe (Form () CreateObservationWithMeta)
-    , serverError : Maybe String
-    , submitting : Bool
-    , showingNewMetaForm : Bool
-    , metaAutoComp : MetaAutocomplete.Model
+    { showing : Showing
+    , observations : PaginatedObservations
     }
 
 
 type Msg
     = NoOp
-    | FormMsg Form.Msg
     | ChannelMsg ChannelState
-    | Submit
-    | Reset
-    | ToggleForm
-    | ToggleViewNewMeta
-    | MetaAutocompleteMsg MetaAutocomplete.Msg
-
-
-initialFields : List ( String, Field )
-initialFields =
-    []
-
-
-emptyForm : Form () CreateObservationWithMeta
-emptyForm =
-    Form.initial initialFields <| validate init.showingNewMetaForm
+    | NewMsg New.Msg
+    | ListMsg ListApp.Msg
+    | ChangeDisplay App
 
 
 init : Model
 init =
-    { form = Nothing
-    , serverError = Nothing
-    , submitting = False
-    , showingNewMetaForm = False
-    , metaAutoComp = MetaAutocomplete.init
+    { showing = ShowList ListApp.init
+    , observations =
+        { entries = []
+        , pagination = defaultPagination
+        }
     }
 
 
@@ -80,189 +84,65 @@ queryStore store =
 
 
 update : Msg -> Model -> QueryStore -> ( Model, Cmd Msg )
-update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl } =
-    case msg of
-        NoOp ->
-            ( model, Cmd.none )
+update msg ({ showing } as model) store =
+    case ( msg, showing ) of
+        ( ChannelMsg (ObservationChannel.Joined response), _ ) ->
+            case response of
+                Ok data ->
+                    { model | observations = data } ! []
 
-        Submit ->
+                Err err ->
+                    let
+                        x =
+                            Debug.log "\n\nObservationChannel.Joined error " err
+                    in
+                        model ! []
+
+        ( ChannelMsg _, _ ) ->
+            model ! []
+
+        ( NewMsg subMsg, ShowNew subModel ) ->
             let
-                newForm =
-                    Form.update (validate showingNewMetaForm) Form.Submit <|
-                        Maybe.withDefault emptyForm form
+                ( ( newSubModel, cmd ), externalMsg ) =
+                    New.update subMsg subModel store
 
-                newModel =
-                    { model | form = Just newForm }
+                updatedModel =
+                    case externalMsg of
+                        New.ObservationCreated data ->
+                            { model | showing = ShowNew newSubModel }
+
+                        New.None ->
+                            { model | showing = ShowNew newSubModel }
             in
-                case ( showingNewMetaForm, Form.getOutput newForm, metaAutoComp.selection ) of
-                    ( True, Just formValues, _ ) ->
-                        let
-                            cmd =
-                                { comment = formValues.comment
-                                , meta = formValues.meta
-                                }
-                                    |> Channel.createWithMeta
-                                    |> Phoenix.push (Maybe.withDefault "" websocketUrl)
-                                    |> Cmd.map ChannelMsg
-                        in
-                            ( { newModel
-                                | submitting = True
-                              }
-                            , cmd
-                            )
+                updatedModel ! [ Cmd.map NewMsg cmd ]
 
-                    ( False, Just { comment }, Just meta ) ->
-                        let
-                            cmd =
-                                { comment = comment, metaId = meta.id }
-                                    |> Channel.createNew
-                                    |> Phoenix.push (Maybe.withDefault "" websocketUrl)
-                                    |> Cmd.map ChannelMsg
-                        in
-                            ( { newModel
-                                | submitting = True
-                              }
-                            , cmd
-                            )
-
-                    _ ->
-                        newModel ! []
-
-        Reset ->
+        ( ListMsg subMsg, ShowList subModel ) ->
             let
-                newForm =
-                    Form.update (validate showingNewMetaForm) (Form.Reset initialFields) <|
-                        Maybe.withDefault emptyForm form
+                ( newSubModel, cmd ) =
+                    ListApp.update subMsg subModel
             in
                 { model
-                    | form = Just newForm
-                    , serverError = Nothing
-                    , metaAutoComp = MetaAutocomplete.init
+                    | showing = ShowList newSubModel
                 }
-                    ! []
+                    ! [ Cmd.map ListMsg cmd ]
 
-        FormMsg formMsg ->
+        ( ChangeDisplay NewApp, _ ) ->
             { model
-                | form =
-                    Just
-                        (Form.update (validate showingNewMetaForm) formMsg <|
-                            Maybe.withDefault emptyForm form
-                        )
-                , serverError = Nothing
+                | showing = ShowNew New.init
             }
                 ! []
 
-        ToggleViewNewMeta ->
-            { model | showingNewMetaForm = not model.showingNewMetaForm } ! []
+        ( ChangeDisplay ListApp_, _ ) ->
+            { model
+                | showing = ShowList ListApp.init
+            }
+                ! []
 
-        ToggleForm ->
-            case form of
-                Nothing ->
-                    { model | form = Just emptyForm } ! []
+        ( NewMsg _, ShowList _ ) ->
+            model ! []
 
-                Just form_ ->
-                    let
-                        _ =
-                            --reset form fields
-                            Form.update (validate showingNewMetaForm) (Form.Reset initialFields) form_
-                    in
-                        { model
-                            | form = Nothing
-                            , showingNewMetaForm = False
-                            , metaAutoComp = MetaAutocomplete.init
-                            , submitting = False
-                            , serverError = Nothing
-                        }
-                            ! []
+        ( ListMsg _, ShowNew _ ) ->
+            model ! []
 
-        ChannelMsg channelState ->
-            let
-                unSubmit : Model -> Model
-                unSubmit updatedModel =
-                    { updatedModel | submitting = False }
-
-                unknownServerError : Model
-                unknownServerError =
-                    { model | serverError = Just "Something went wrong!" }
-                        |> unSubmit
-            in
-                case channelState of
-                    Channel.CreateObservationSucceeds result ->
-                        case result of
-                            Ok data ->
-                                let
-                                    x =
-                                        Debug.log "\n\nCreateObservationSucceeds" data
-                                in
-                                    ( unSubmit model, Cmd.none )
-
-                            Err err ->
-                                let
-                                    x =
-                                        Debug.log "NewWithMetaSucceeds decode error" err
-                                in
-                                    unknownServerError ! []
-
-                    Channel.CreateObservationFails val ->
-                        let
-                            x =
-                                Debug.log "NewWithMetaFails" val
-                        in
-                            unknownServerError ! []
-
-                    _ ->
-                        ( model, Cmd.none )
-
-        MetaAutocompleteMsg subMsg ->
-            case ( subMsg, metaAutoComp.editingAutocomp ) of
-                ( MetaAutocomplete.SetAutoState _, False ) ->
-                    --This will make sure we only trigger autocomplete when typing in the autocomplete input
-                    model ! []
-
-                _ ->
-                    let
-                        ( subModel, subCmd ) =
-                            MetaAutocomplete.update subMsg model.metaAutoComp
-
-                        cmd =
-                            Cmd.map MetaAutocompleteMsg subCmd
-
-                        newModel =
-                            { model
-                                | metaAutoComp =
-                                    { subModel
-                                        | websocketUrl = websocketUrl
-                                    }
-                            }
-                    in
-                        newModel ! [ cmd ]
-
-
-
--- FORM VALIDATION
-
-
-nonEmpty : Int -> Validation () String
-nonEmpty minLength =
-    Validate.string
-        |> Validate.andThen Validate.nonEmpty
-        |> Validate.andThen (Validate.minLength minLength)
-
-
-validate : Bool -> Validation () CreateObservationWithMeta
-validate showingNewMetaForm =
-    let
-        validateMeta =
-            Validate.map2 CreateMeta
-                (Validate.field "title" validateTitle)
-                (Validate.field "intro" (Validate.maybe Validate.string))
-
-        validateTitle =
-            if showingNewMetaForm == True then
-                nonEmpty 3
-            else
-                Validate.succeed emptyString
-    in
-        Validate.map2 CreateObservationWithMeta
-            (Validate.field "comment" (nonEmpty 3))
-            (Validate.field "meta" validateMeta)
+        ( NoOp, _ ) ->
+            ( model, Cmd.none )

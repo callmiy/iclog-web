@@ -27,7 +27,7 @@ defmodule Iclog.Observable.Observation.TestHelper do
     observation
   end
 
-  def valid_query(:observation_query) do
+  def valid_query(:observations) do
     """
     {
       observations {
@@ -43,6 +43,39 @@ defmodule Iclog.Observable.Observation.TestHelper do
       }
     }
     """
+  end
+  def valid_query(:paginated_observations) do
+    query = """
+      query ($pagination: PaginationParams!) {
+        paginatedObservations(
+          pagination: $pagination
+        ) {
+            entries {
+              id
+              comment
+              insertedAt
+              updatedAt
+              meta {
+                id
+                title
+                intro
+              }
+            }
+            pagination {
+              pageNumber
+              pageSize
+              totalPages
+              totalEntries
+            }
+        }
+      }
+    """
+
+    params = %{"pagination" => %{
+      "pageNumber" => 1
+    }}
+
+    {query, params}
   end
 
   def valid_query(:Observation_mutation_with_meta) do

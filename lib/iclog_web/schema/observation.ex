@@ -19,17 +19,33 @@ defmodule IclogWeb.Schema.Observation do
     field :updated_at, :timex_datetime
   end
 
+  object :paginated_obervation do
+    field :entries, list_of(:observation)
+    field :pagination, :pagination
+  end
+
   object :observation_query do
     field :observations, list_of(:observation) do
+
       resolve fn(_args, _info) ->
         obs = :with_meta
           |> Observation.list()
-          |> Stream.map(fn(ob) ->
-              {meta, new_ob} = Map.pop(ob, :observation_meta)
-              Map.put(new_ob, :meta, meta)
-            end)
-          |> Enum.to_list()
+          |> observation_with_meta()
         {:ok, obs}
+      end
+    end
+
+    field :paginated_observations, :paginated_obervation do
+      arg :pagination, non_null(:pagination_params)
+
+      resolve fn(args, _info) ->
+        pagination_params = Map.get(args, :pagination, nil)
+        %{entries: entries} = result = Observation.list(:with_meta, pagination_params)
+
+        {
+          :ok,
+          Map.put(result, :entries, observation_with_meta(entries))
+        }
       end
     end
   end
@@ -88,5 +104,13 @@ defmodule IclogWeb.Schema.Observation do
       end
 
     end
+  end
+
+  defp observation_with_meta(obs) do
+    Stream.map(obs, fn(ob) ->
+          {meta, new_ob} = Map.pop(ob, :observation_meta)
+          Map.put(new_ob, :meta, meta)
+        end)
+      |> Enum.to_list()
   end
 end

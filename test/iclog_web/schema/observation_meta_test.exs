@@ -8,7 +8,7 @@ defmodule IclogWeb.Schema.ObservationMetaTest do
 
   describe "query" do
     setup [:init]
-    
+
     test ":observation_metas", %{meta_id: meta_id, ob_id: ob_id} do
 
       assert {
@@ -29,7 +29,7 @@ defmodule IclogWeb.Schema.ObservationMetaTest do
                   ]
               }
           }
-      } = Absinthe.run(valid_query(:observation_metas_query), Schema)  
+      } = Absinthe.run(valid_query(:observation_metas_query), Schema)
     end
 
     test ":observation_metas_by_title", %{meta_id: meta_id, ob_id: ob_id}  do
@@ -53,14 +53,14 @@ defmodule IclogWeb.Schema.ObservationMetaTest do
                   ]
               }
           }
-      } = Absinthe.run(query, Schema, variables: query_params)  
+      } = Absinthe.run(query, Schema, variables: query_params)
     end
   end
-  
+
   defp init(%{describe: "query"}) do
     %{observation_meta_id: meta_id_} = ob_parms = ObHelper.valid_attrs(:with_meta)
     meta_id = Integer.to_string meta_id_
-   
+
     %Observation{id: ob_id_} = ObHelper.fixture(ob_parms)
     ob_id = Integer.to_string ob_id_
 

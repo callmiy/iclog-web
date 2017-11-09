@@ -1,7 +1,7 @@
 defmodule IclogWeb.Schema do
   use Absinthe.Schema
 
-  import_types IclogWeb.Schema.Helpers
+  import_types IclogWeb.Schema.Types
   import_types IclogWeb.Schema.Observation
   import_types IclogWeb.Schema.ObservationMeta
 

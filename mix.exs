@@ -44,7 +44,9 @@ defmodule Iclog.Mixfile do
       {:plug_static_index_html, "~> 1.0"},
       {:timex, "~> 3.1"},
       {:timex_ecto, "~> 3.0"},
-      {:absinthe, "~> 1.3"}
+      {:absinthe, "~> 1.3"},
+      {:scrivener_ecto, "~> 1.3"},
+      {:ex_machina, "~> 2.1"},
     ]
   end
 

@@ -22,6 +22,7 @@ defmodule Iclog.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import Iclog.DataCase
+      import Iclog.Factory
     end
   end
 

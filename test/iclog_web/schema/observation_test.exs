@@ -8,31 +8,69 @@ defmodule IclogWeb.Schema.ObservationTest do
   alias IclogWeb.Schema
 
   describe "query" do
-    test ":observation_query" do
-      %Observation{id: id_} = fixture()
+    test "observations_query" do
+      %Observation{
+        id: id_,
+        comment: comment,
+        observation_meta: %ObservationMeta{
+          id: obm_id_,
+          title: title,
+          intro: intro,
+        }
+      } = insert(:observation)
+
       id = Integer.to_string id_
+      obm_id = Integer.to_string obm_id_
 
-      assert {
-          :ok,
-          %{data:
-              %{
-                  "observations" => [
-                    %{
-                      "id" => ^id,
-                      "comment" => _,
-                      "insertedAt" => _,
-                      "updatedAt" => _,
-                      "meta" => %{
-                        "id" => _,
-                        "title" => _,
-                        "intro" => _
-                      }
-                    }
-                  ]
+      assert {:ok, %{
+          data: %{
+            "observations" => [%{
+              "id" => ^id,
+              "comment" => ^comment,
+              "insertedAt" => _,
+              "updatedAt" => _,
+              "meta" => %{
+                "id" => ^obm_id,
+                "title" => ^title,
+                "intro" => ^intro,
               }
+            }]
           }
-      } = Absinthe.run(valid_query(:observation_query), Schema)
+        }
+      } = Absinthe.run(valid_query(:observations), Schema)
+    end
 
+    test ":paginated_observations_query" do
+      insert_list(11, :observation)
+
+      {query, params} = valid_query(:paginated_observations)
+
+      {:ok, %{
+          data: %{
+            "paginatedObservations" => %{
+              "entries" => obs,
+              "pagination" => %{
+                "totalEntries" => 11,
+                "pageNumber" => 1,
+                "pageSize" => 10,
+                "totalPages" => 2,
+              }
+            }
+          }
+        }
+      } = Absinthe.run(query, Schema, variables: params)
+
+      assert %{
+        "id" => _,
+        "comment" => _,
+        "insertedAt" => _,
+        "updatedAt" => _,
+        "meta" => %{
+          "id" => _,
+          "title" => _,
+          "intro" => _,
+        }
+      } = (List.first obs)
     end
   end
 
