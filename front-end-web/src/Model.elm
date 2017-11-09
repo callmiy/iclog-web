@@ -19,10 +19,14 @@ type alias Model =
 
 init : Flag -> ( Model, Cmd Msg )
 init flag =
-    { store = Store.create flag
-    , pageState = Loaded (Page.Observation Observation.init)
-    }
-        ! []
+    let
+        ( childModel, cmd ) =
+            Observation.init
+    in
+        { store = Store.create flag
+        , pageState = Loaded (Page.Observation childModel)
+        }
+            ! [ Cmd.map ObservationMsg cmd ]
 
 
 

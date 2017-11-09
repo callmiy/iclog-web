@@ -61,7 +61,7 @@ type Msg
     | ChangeDisplay App
 
 
-init : Model
+init : ( Model, Cmd Msg )
 init =
     { showing = ShowList ListApp.init
     , observations =
@@ -69,6 +69,7 @@ init =
         , pagination = defaultPagination
         }
     }
+        ! []
 
 
 
