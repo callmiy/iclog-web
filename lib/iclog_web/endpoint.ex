@@ -11,7 +11,7 @@ defmodule IclogWeb.Endpoint do
   # You should set gzip to true if you are running phoenix.digest
   # when deploying your static files in production.
   plug Plug.Static,
-    at: "/", 
+    at: "/",
     gzip: false,
     from:  "front-end-web/build",
     only_matching: ~w(index.html favicon manifest robots.txt static service)
@@ -43,6 +43,8 @@ defmodule IclogWeb.Endpoint do
     key: "_iclog_key",
     signing_salt: "kZ0VK/ws"
 
+  plug Corsica, origins: "*",
+    allow_headers: ~w(Accept Content-Type Authorization Origin)
   plug  IclogWeb.Redictor
   plug IclogWeb.Router
 
