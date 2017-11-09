@@ -6745,11 +6745,18 @@ textarea {
   font-weight: normal;
   font-style: normal; }
 
+@font-face {
+  font-family: "logo-font";
+  src: url("./fonts/logo-font.eot");
+  src: url("./fonts/logo-font.eot?#iefix") format("eot"), url("./fonts/logo-font.woff") format("woff"), url("./fonts/logo-font.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal; }
+
 .bv:before {
   position: relative;
   top: 2px;
   display: inline-block;
-  font-family: "toolkit-entypo";
+  font-family: "logo-font";
   speak: none;
   font-size: 100%;
   font-style: normal;
@@ -7431,7 +7438,7 @@ textarea {
   content: "\EADA"; }
 
 .bch:before {
-  content: "\EADB"; }
+  content: "\e900"; }
 
 .bci:before {
   content: "\EADC"; }
