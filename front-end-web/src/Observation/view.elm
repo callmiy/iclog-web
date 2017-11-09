@@ -4,15 +4,9 @@ import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
 import Css
-import SharedStyles exposing (..)
-import Observation.Styles exposing (observationNamespace)
 import Observation.App as Model exposing (Model, Msg(..), App(..), Showing(..))
 import Observation.New.App as New
 import Observation.List.App as ListApp
-
-
-{ id, class, classList } =
-    observationNamespace
 
 
 styles : List Css.Style -> Attribute msg

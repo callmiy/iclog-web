@@ -261,6 +261,12 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
         showingQueryForm =
             (not model.showingNewMetaForm)
 
+        styles_ =
+            if model.showingNewMetaForm == True then
+                [ Css.marginTop (Css.rem 2.5) ]
+            else
+                []
+
         queryEmpty =
             (not <| stringGt metaAutoComp.query 0)
 
@@ -283,6 +289,7 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
         Html.form
             [ onSubmit Submit
             , Attr.novalidate True
+            , styles styles_
             ]
             [ FormUtils.textualErrorBox serverError
             , viewMeta form model

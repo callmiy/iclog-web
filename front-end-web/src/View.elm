@@ -58,7 +58,7 @@ navigation =
                 [ navCollapseControl
                 , a
                     [ class "blh bmh", href "#" ]
-                    [ span [ class "bv bch bli" ] [] ]
+                    [ span [ class "bv-logo bch bli" ] [] ]
                 ]
             , div
                 [ class "collapse bki", id "nav-toggleable-md" ]

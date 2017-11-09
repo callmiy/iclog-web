@@ -6756,6 +6756,21 @@ textarea {
   position: relative;
   top: 2px;
   display: inline-block;
+  font-family: "toolkit-entypo";
+  speak: none;
+  font-size: 100%;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; }
+
+.bv-logo:before {
+  position: relative;
+  top: 2px;
+  display: inline-block;
   font-family: "logo-font";
   speak: none;
   font-size: 100%;
