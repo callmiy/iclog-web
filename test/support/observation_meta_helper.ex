@@ -21,4 +21,43 @@ defmodule Iclog.Observable.ObservationMeta.TestHelper do
 
     meta
   end
+
+  def valid_query(:observation_metas_query) do
+    """
+    {
+      observationMetas {
+        id
+        title
+        intro
+        inserted_at
+        updated_at
+        observations {
+          id
+          comment
+        }
+      }
+    }
+    """
+  end
+  def valid_query(:observation_metas_by_title_query) do
+    query = """
+    {
+      observationMetasByTitle(title: "som") {
+        id
+        title
+        intro
+        inserted_at
+        updated_at
+        observations {
+          id
+          comment
+        }
+      }
+    }
+    """
+
+    params = %{"title" => valid_attrs()[:title]}
+
+    {query, params}
+  end
 end

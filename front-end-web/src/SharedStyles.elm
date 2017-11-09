@@ -5,3 +5,8 @@ type CssClasses
     = NewMeta
     | NewMetaLegend
     | NewMetaDismiss
+    | AutocompleteMenu
+    | AutocompleteItem
+    | KeySelected
+    | MouseSelected
+    | AutocompleteList

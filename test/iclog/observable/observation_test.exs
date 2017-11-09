@@ -30,7 +30,7 @@ defmodule Iclog.Observable.ObservationTest do
     end
 
     test "create/1 with valid data creates a observation" do
-       assert {:ok, %Observation{} = observation} = Observation.create(valid_attrs())
+       assert {:ok, %Observation{} = observation} = Observation.create(valid_attrs(:with_meta))
       assert observation.comment == "some comment"
     end
 

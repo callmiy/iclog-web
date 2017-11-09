@@ -2,34 +2,36 @@ module Observation.Model
     exposing
         ( Model
         , Msg(..)
-        , channel
         , init
         , update
         , queryStore
-        , Observation
-        , FormValues
+        , subscriptions
         )
 
 import Form exposing (Form, FieldState)
 import Form.Field as Field exposing (Field)
 import Form.Validate as Validate exposing (Validation)
 import Phoenix
-import Phoenix.Channel as Channel exposing (Channel)
-import Phoenix.Push as Push exposing (Push)
-import Json.Encode as Je
-import Json.Decode as Jd exposing (Decoder)
-import Json.Decode.Extra as Jde exposing ((|:))
-import GraphQL.Request.Builder as Grb exposing (Document, Mutation, ValueSpec, Request)
-import GraphQL.Request.Builder.Arg as Arg
-import GraphQL.Request.Builder.Variable as Var exposing (VariableSpec, Variable)
 import Store exposing (Store)
+import Observation.Types exposing (Observation, Meta, CreateObservationWithMeta, CreateMeta, emptyMeta, emptyString)
+import Observation.MetaAutocomplete as MetaAutocomplete
+import Observation.Channel as Channel exposing (ChannelState)
+
+
+subscriptions : Model -> Sub Msg
+subscriptions ({ metaAutoComp } as model) =
+    Sub.batch
+        [ MetaAutocomplete.subscriptions metaAutoComp
+            |> Sub.map MetaAutocompleteMsg
+        ]
 
 
 type alias Model =
-    { form : Maybe (Form () FormValues)
+    { form : Maybe (Form () CreateObservationWithMeta)
     , serverError : Maybe String
     , submitting : Bool
     , showingNewMetaForm : Bool
+    , metaAutoComp : MetaAutocomplete.Model
     }
 
 
@@ -41,38 +43,7 @@ type Msg
     | Reset
     | ToggleForm
     | ToggleViewNewMeta
-
-
-type alias FormValues =
-    { comment : String
-    , title : String
-    , intro : Maybe String
-    , selectMeta : String
-    }
-
-
-type alias Observation =
-    { comment : String
-    , meta : Maybe Meta
-    }
-
-
-type alias Meta =
-    { title : String
-    , intro : Maybe String
-    }
-
-
-emptyMeta : Meta
-emptyMeta =
-    { title = emptyMetaTitle
-    , intro = Nothing
-    }
-
-
-emptyMetaTitle : String
-emptyMetaTitle =
-    ""
+    | MetaAutocompleteMsg MetaAutocomplete.Msg
 
 
 initialFields : List ( String, Field )
@@ -80,7 +51,7 @@ initialFields =
     []
 
 
-emptyForm : Form () FormValues
+emptyForm : Form () CreateObservationWithMeta
 emptyForm =
     Form.initial initialFields <| validate init.showingNewMetaForm
 
@@ -91,6 +62,7 @@ init =
     , serverError = Nothing
     , submitting = False
     , showingNewMetaForm = False
+    , metaAutoComp = MetaAutocomplete.init
     }
 
 
@@ -108,7 +80,7 @@ queryStore store =
 
 
 update : Msg -> Model -> QueryStore -> ( Model, Cmd Msg )
-update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
+update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl } =
     case msg of
         NoOp ->
             ( model, Cmd.none )
@@ -122,25 +94,14 @@ update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
                 newModel =
                     { model | form = Just newForm }
             in
-                case ( Form.getOutput newForm, showingNewMetaForm ) of
-                    ( Just formValues, True ) ->
+                case ( showingNewMetaForm, Form.getOutput newForm, metaAutoComp.selection ) of
+                    ( True, Just formValues, _ ) ->
                         let
-                            x =
-                                Debug.log "form values = " ( formValues, extractValues )
-
-                            extractValues : Observation
-                            extractValues =
-                                { comment = formValues.comment
-                                , meta =
-                                    Just
-                                        { title = formValues.title
-                                        , intro = formValues.intro
-                                        }
-                                }
-
                             cmd =
-                                extractValues
-                                    |> createNewObservation
+                                { comment = formValues.comment
+                                , meta = formValues.meta
+                                }
+                                    |> Channel.createWithMeta
                                     |> Phoenix.push (Maybe.withDefault "" websocketUrl)
                                     |> Cmd.map ChannelMsg
                         in
@@ -150,10 +111,21 @@ update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
                             , cmd
                             )
 
-                    ( Just formValues, False ) ->
-                        newModel ! []
+                    ( False, Just { comment }, Just meta ) ->
+                        let
+                            cmd =
+                                { comment = comment, metaId = meta.id }
+                                    |> Channel.createNew
+                                    |> Phoenix.push (Maybe.withDefault "" websocketUrl)
+                                    |> Cmd.map ChannelMsg
+                        in
+                            ( { newModel
+                                | submitting = True
+                              }
+                            , cmd
+                            )
 
-                    ( Nothing, _ ) ->
+                    _ ->
                         newModel ! []
 
         Reset ->
@@ -165,6 +137,7 @@ update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
                 { model
                     | form = Just newForm
                     , serverError = Nothing
+                    , metaAutoComp = MetaAutocomplete.init
                 }
                     ! []
 
@@ -187,8 +160,20 @@ update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
                 Nothing ->
                     { model | form = Just emptyForm } ! []
 
-                Just _ ->
-                    { model | form = Nothing } ! []
+                Just form_ ->
+                    let
+                        _ =
+                            --reset form fields
+                            Form.update (validate showingNewMetaForm) (Form.Reset initialFields) form_
+                    in
+                        { model
+                            | form = Nothing
+                            , showingNewMetaForm = False
+                            , metaAutoComp = MetaAutocomplete.init
+                            , submitting = False
+                            , serverError = Nothing
+                        }
+                            ! []
 
         ChannelMsg channelState ->
             let
@@ -202,10 +187,14 @@ update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
                         |> unSubmit
             in
                 case channelState of
-                    NewWithMetaSucceeds val ->
-                        case decodeMutationResponseSuccess val of
+                    Channel.CreateObservationSucceeds result ->
+                        case result of
                             Ok data ->
-                                ( unSubmit model, Cmd.none )
+                                let
+                                    x =
+                                        Debug.log "\n\nCreateObservationSucceeds" data
+                                in
+                                    ( unSubmit model, Cmd.none )
 
                             Err err ->
                                 let
@@ -214,7 +203,7 @@ update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
                                 in
                                     unknownServerError ! []
 
-                    NewWithMetaFails val ->
+                    Channel.CreateObservationFails val ->
                         let
                             x =
                                 Debug.log "NewWithMetaFails" val
@@ -223,6 +212,30 @@ update msg ({ form, showingNewMetaForm } as model) { websocketUrl } =
 
                     _ ->
                         ( model, Cmd.none )
+
+        MetaAutocompleteMsg subMsg ->
+            case ( subMsg, metaAutoComp.editingAutocomp ) of
+                ( MetaAutocomplete.SetAutoState _, False ) ->
+                    --This will make sure we only trigger autocomplete when typing in the autocomplete input
+                    model ! []
+
+                _ ->
+                    let
+                        ( subModel, subCmd ) =
+                            MetaAutocomplete.update subMsg model.metaAutoComp
+
+                        cmd =
+                            Cmd.map MetaAutocompleteMsg subCmd
+
+                        newModel =
+                            { model
+                                | metaAutoComp =
+                                    { subModel
+                                        | websocketUrl = websocketUrl
+                                    }
+                            }
+                    in
+                        newModel ! [ cmd ]
 
 
 
@@ -236,151 +249,20 @@ nonEmpty minLength =
         |> Validate.andThen (Validate.minLength minLength)
 
 
-validate : Bool -> Validation () FormValues
+validate : Bool -> Validation () CreateObservationWithMeta
 validate showingNewMetaForm =
     let
-        ( validateTitle, validateSelectMeta ) =
+        validateMeta =
+            Validate.map2 CreateMeta
+                (Validate.field "title" validateTitle)
+                (Validate.field "intro" (Validate.maybe Validate.string))
+
+        validateTitle =
             if showingNewMetaForm == True then
-                ( nonEmpty 3, Validate.succeed emptyMetaTitle )
+                nonEmpty 3
             else
-                ( Validate.succeed emptyMetaTitle, nonEmpty 3 )
+                Validate.succeed emptyString
     in
-        Validate.map4 FormValues
+        Validate.map2 CreateObservationWithMeta
             (Validate.field "comment" (nonEmpty 3))
-            (Validate.field "title" validateTitle)
-            (Validate.field "intro" (Validate.maybe Validate.string))
-            (Validate.field "selectMeta" validateSelectMeta)
-
-
-
--- CHANNEL
-
-
-channelName : String
-channelName =
-    "observation:observation"
-
-
-type ChannelState
-    = Joining
-    | Joined Je.Value
-    | Leaving
-    | Left
-    | NewWithMetaSucceeds Je.Value
-    | NewWithMetaFails Je.Value
-
-
-channel : Channel ChannelState
-channel =
-    channelName
-        |> Channel.init
-        |> Channel.onRequestJoin Joining
-        |> Channel.onJoin Joined
-        |> Channel.onLeave (\_ -> Left)
-        |> Channel.withDebug
-
-
-createNewObservation : Observation -> Push ChannelState
-createNewObservation formValues =
-    let
-        query : String
-        query =
-            mutationWithMetaRequest formValues
-                |> Grb.requestBody
-
-        params : Je.Value
-        params =
-            mutationWithMetaRequest formValues
-                |> Grb.jsonVariableValues
-                |> Maybe.withDefault Je.null
-
-        payLoad =
-            Je.object
-                [ ( "with_meta", Je.bool True )
-                , ( "query", Je.string query )
-                , ( "params", params )
-                ]
-
-        x =
-            Debug.log "payload " payLoad
-    in
-        Push.init channelName "new_observation"
-            |> Push.withPayload payLoad
-            |> Push.onOk NewWithMetaSucceeds
-            |> Push.onError NewWithMetaFails
-
-
-
--- GRAPHQL
-
-
-mutationName : String
-mutationName =
-    "observationWithMeta"
-
-
-mutationWithMetaRequest : Observation -> Request Mutation Observation
-mutationWithMetaRequest formValues =
-    let
-        commentVar : Variable Observation
-        commentVar =
-            Var.required "comment" .comment Var.string
-
-        metaVar : Variable Observation
-        metaVar =
-            Var.optional "meta" .meta graphqlVarMeta emptyMeta
-
-        mutation : Document Mutation Observation Observation
-        mutation =
-            Grb.mutationDocument <|
-                Grb.extract
-                    (Grb.field mutationName
-                        [ ( "comment", Arg.variable commentVar )
-                        , ( "meta", Arg.variable metaVar )
-                        ]
-                        (Grb.object Observation
-                            |> Grb.with (Grb.field "comment" [] Grb.string)
-                            |> Grb.with (Grb.field "meta" [] graphqlValueMeta)
-                        )
-                    )
-    in
-        Grb.request formValues mutation
-
-
-graphqlValueMeta : ValueSpec Grb.Nullable Grb.ObjectType (Maybe Meta) var
-graphqlValueMeta =
-    Grb.object Meta
-        |> Grb.with (Grb.field "title" [] Grb.string)
-        |> Grb.with (Grb.field "intro" [] (Grb.nullable Grb.string))
-        |> Grb.nullable
-
-
-graphqlVarMeta : VariableSpec Var.NonNull Meta
-graphqlVarMeta =
-    Var.object "Meta"
-        [ Var.field "title" .title Var.string
-        , Var.field "intro" .intro (Var.nullable Var.string)
-        ]
-
-
-
--- DECODERS
-
-
-metaDecoder : Decoder Meta
-metaDecoder =
-    Jd.succeed Meta
-        |: (Jd.field "title" Jd.string)
-        |: (Jd.field "intro" (Jd.nullable Jd.string))
-
-
-decoder : Decoder Observation
-decoder =
-    Jd.succeed Observation
-        |: (Jd.field "comment" Jd.string)
-        |: (Jd.field "meta" (Jd.nullable metaDecoder))
-
-
-decodeMutationResponseSuccess : Jd.Value -> Result String Observation
-decodeMutationResponseSuccess response =
-    Jd.decodeValue (Jd.at [ "data", mutationName ] decoder) response
+            (Validate.field "meta" validateMeta)

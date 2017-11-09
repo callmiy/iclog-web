@@ -69,11 +69,7 @@ formGrp control state additionalAttributes otherErrors msg =
     in
         Html.map msg <|
             div
-                [ Attr.classList
-                    [ ( "blj has-success", True )
-                    , ( "error", isInvalid )
-                    ]
-                ]
+                [ Attr.class "blj" ]
                 [ control state attributes
                 , errorMessage error isInvalid
                 , textualError otherErrors

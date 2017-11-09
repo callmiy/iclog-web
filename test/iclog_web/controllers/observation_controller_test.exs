@@ -17,7 +17,7 @@ defmodule IclogWeb.ObservationControllerTest do
 
   describe "create observation" do
     test "renders observation when data is valid", %{conn: conn} do
-      conn = post conn, observation_path(conn, :create), observation: valid_attrs()
+      conn = post conn, observation_path(conn, :create), observation: valid_attrs(:with_meta)
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get conn, observation_path(conn, :show, id)
@@ -60,7 +60,7 @@ defmodule IclogWeb.ObservationControllerTest do
   end
 
   defp create(_) do
-    {:ok, observation} = Observation.create(valid_attrs())
+    {:ok, observation} = Observation.create(valid_attrs(:with_meta))
     {:ok, observation: observation}
   end
 end

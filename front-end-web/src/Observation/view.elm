@@ -10,7 +10,10 @@ import Set
 import Css
 import SharedStyles exposing (..)
 import Observation.Styles exposing (observationNamespace)
-import Observation.Model as Model exposing (Model, FormValues, Msg(..))
+import Observation.Model as Model exposing (Model, Msg(..))
+import Observation.Types exposing (CreateObservationWithMeta)
+import Observation.MetaAutocomplete as MetaAutocomplete
+import Observation.Utils exposing (stringGt)
 
 
 { id, class, classList } =
@@ -54,7 +57,7 @@ viewFormToggler display =
 
 
 viewForm : Model -> Html Msg
-viewForm ({ serverError, submitting } as model) =
+viewForm ({ serverError, submitting, metaAutoComp } as model) =
     case model.form of
         Nothing ->
             Html.text ""
@@ -75,13 +78,26 @@ viewForm ({ serverError, submitting } as model) =
                 formIsEmpty =
                     Set.isEmpty <| Form.getChangedFields form_
 
+                showingQueryForm =
+                    (not model.showingNewMetaForm)
+
+                queryEmpty =
+                    (not <| stringGt metaAutoComp.query 0)
+
+                queryInvalid =
+                    showingQueryForm
+                        && ((not <| stringGt metaAutoComp.query 2)
+                                || (metaAutoComp.selection == Nothing)
+                           )
+
                 disableSubmitBtn =
                     formIsEmpty
+                        || queryInvalid
                         || ([] /= Form.getErrors form_)
                         || (submitting == True)
 
                 disableResetBtn =
-                    formIsEmpty
+                    (queryEmpty && formIsEmpty)
                         || (submitting == True)
             in
                 Html.form
@@ -105,40 +121,74 @@ viewForm ({ serverError, submitting } as model) =
                     ]
 
 
-viewMeta : Form () FormValues -> Model -> Html Msg
+viewMeta : Form () CreateObservationWithMeta -> Model -> Html Msg
 viewMeta form_ ({ showingNewMetaForm } as model) =
     let
         viewing =
             if showingNewMetaForm == True then
                 viewNewMeta form_
             else
-                viewMetaSelect form_ model
+                viewMetaSelect model
     in
         Html.div
             [ styles [ Css.marginTop (Css.rem 0.75) ] ]
             [ viewing ]
 
 
-viewMetaSelect : Form () FormValues -> Model -> Html Msg
-viewMetaSelect form_ model =
+viewMetaSelect : Model -> Html Msg
+viewMetaSelect ({ showingNewMetaForm, metaAutoComp } as model) =
     let
-        field =
-            Form.getFieldAsString "selectMeta" form_
+        isChanged =
+            stringGt metaAutoComp.query 0
 
-        ( attributes, isInvalid, error ) =
-            FormUtils.formControlValidator
-                field
-                [ Attr.placeholder "Type to select title or click + to create"
-                , Attr.value (Maybe.withDefault "" field.value)
+        nothingSelected =
+            isChanged && (metaAutoComp.selection == Nothing)
+
+        queryInvalid =
+            isChanged && (not <| stringGt metaAutoComp.query 2)
+
+        showingQuery =
+            (not showingNewMetaForm) && isChanged
+
+        ( isValid, isInvalid, error ) =
+            case ( showingQuery, queryInvalid, nothingSelected ) of
+                ( True, True, _ ) ->
+                    ( False, True, Just "Type more than 3 chars to trigger autocomplete!" )
+
+                ( True, False, True ) ->
+                    ( False, True, Just "Select an option from autocomplete!" )
+
+                ( True, False, False ) ->
+                    ( True, False, Nothing )
+
+                _ ->
+                    ( False, False, Nothing )
+
+        ( autoCompleteAttributes, menus_ ) =
+            MetaAutocomplete.view model.metaAutoComp
+
+        attributes =
+            [ Attr.placeholder "Type to select title or click + to create"
+            , Attr.classList
+                [ ( "form-control", True )
+                , ( "is-invalid", isInvalid )
+                , ( "is-valid", isValid )
                 ]
-                Nothing
+            , Attr.id "select-meta-input"
+            ]
+                ++ autoCompleteAttributes
 
         input =
-            Html.map FormMsg (Input.textInput field attributes)
+            Html.map MetaAutocompleteMsg <| Html.input attributes []
+
+        menus =
+            List.map
+                (\menu -> Html.map MetaAutocompleteMsg menu)
+                menus_
     in
         Html.div
             [ Attr.class "meta-select" ]
-            [ Html.div
+            ([ Html.div
                 [ Attr.class "blj input-group" ]
                 [ input
                 , Html.span
@@ -148,18 +198,20 @@ viewMetaSelect form_ model =
                     ]
                     [ Html.span [ Attr.class "fa fa-plus-square" ] [] ]
                 ]
-            , FormUtils.errorMessage error isInvalid
-            ]
+             ]
+                ++ menus
+                ++ [ FormUtils.textualError error ]
+            )
 
 
-viewNewMeta : Form () FormValues -> Html Msg
+viewNewMeta : Form () CreateObservationWithMeta -> Html Msg
 viewNewMeta form_ =
     let
         titleField =
-            Form.getFieldAsString "title" form_
+            Form.getFieldAsString "meta.title" form_
 
         introField =
-            Form.getFieldAsString "intro" form_
+            Form.getFieldAsString "meta.intro" form_
     in
         Html.div
             [ class [ NewMeta ] ]
@@ -218,6 +270,7 @@ formBtns label_ disableSubmitBtn disableResetBtn =
             [ styles [ Css.marginLeft (Css.rem 4) ]
             , Attr.class "btn btn-outline-warning"
             , Attr.disabled disableResetBtn
+            , Attr.type_ "button"
             , onClick Reset
             ]
             [ Html.text "Reset" ]

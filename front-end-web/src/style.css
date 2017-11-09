@@ -16,3 +16,37 @@
     min-width: 100%;
     cursor: pointer;
 }
+
+.autocompleteAutocompleteMenu {
+    position: relative !important;
+    margin-top: 5px;
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    min-width: 120px;
+}
+
+.autocompleteAutocompleteItem {
+    display: block;
+    padding: 5px 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.autocompleteKeySelected {
+    background-color: #3366FF;
+}
+
+.autocompleteMouseSelected {
+    background-color: #ececec;
+}
+
+.autocompleteAutocompleteList {
+    list-style: none;
+    padding: 0px;
+    margin: auto;
+    max-height: 200px;
+    overflow-y: auto;
+}

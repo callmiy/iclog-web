@@ -7,6 +7,7 @@ defmodule IclogWeb.Schema do
 
   query do
     import_fields :observation_query
+    import_fields :observation_meta_query
   end
 
   mutation do

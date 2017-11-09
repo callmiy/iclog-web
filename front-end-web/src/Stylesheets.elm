@@ -2,6 +2,7 @@ port module Stylesheets exposing (..)
 
 import Css.File exposing (CssCompilerProgram, CssFileStructure)
 import Observation.Styles as Observation
+import AutocompleteStyles
 
 
 port files : CssFileStructure -> Cmd msg
@@ -13,6 +14,7 @@ fileStructure =
         [ ( "src/style.css"
           , Css.File.compile
                 [ Observation.css
+                , AutocompleteStyles.css
                 ]
           )
         ]

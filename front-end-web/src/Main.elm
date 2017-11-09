@@ -8,11 +8,23 @@ import Observation.Model as Observation
 import View
 import Model exposing (Model, Msg)
 import Store exposing (Flag)
+import Page
+import Observation.Channel as ObservationChannel
 
 
 subs : Model -> Sub Msg
 subs model =
-    Sub.batch [ phoenixSubscription model ]
+    let
+        page =
+            Page.getPage model.pageState
+
+        subs =
+            case page of
+                Page.Observation subModel ->
+                    [ Sub.map Model.ObservationMsg <| Observation.subscriptions subModel ]
+    in
+        Sub.batch
+            ([ phoenixSubscription model ] ++ subs)
 
 
 socket : String -> Socket Msg
@@ -22,14 +34,22 @@ socket url =
 
 
 phoenixSubscription : Model -> Sub Msg
-phoenixSubscription ({ store } as model) =
+phoenixSubscription ({ store, pageState } as model) =
     case Store.getWebsocketUrl store of
         Just url ->
-            Phoenix.connect (socket url) <|
-                [ Channel.map
-                    (Model.ObservationMsg << Observation.ChannelMsg)
-                    Observation.channel
-                ]
+            let
+                page =
+                    Page.getPage pageState
+
+                channels =
+                    case page of
+                        Page.Observation _ ->
+                            [ Channel.map
+                                (Model.ObservationMsg << Observation.ChannelMsg)
+                                ObservationChannel.channel
+                            ]
+            in
+                Phoenix.connect (socket url) channels
 
         Nothing ->
             Sub.none

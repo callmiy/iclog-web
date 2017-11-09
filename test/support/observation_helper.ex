@@ -6,22 +6,22 @@ defmodule Iclog.Observable.Observation.TestHelper do
     %{comment: "some comment"}
   end
 
-  def valid_attrs do
+  def valid_attrs(:with_meta) do
     meta = ObservationMetaHelper.fixture()
     %{comment: "some comment", observation_meta_id: meta.id}
-  end 
+  end
 
   def update_attrs do
     %{comment: "some updated comment"}
-  end 
+  end
 
   def invalid_attrs do
     %{}
   end
 
   def fixture(attrs \\ nil) do
-    attrs = if attrs == nil, do: valid_attrs(), else: attrs
-    
+    attrs = if attrs == nil, do: valid_attrs(:with_meta), else: attrs
+
     {:ok, observation} = Observation.create(attrs)
 
     observation
@@ -63,6 +63,33 @@ defmodule Iclog.Observable.Observation.TestHelper do
     params = %{
       "comment" => "some comment",
       "meta" => %{"title" => "nice title"}
+    }
+
+    {query, params}
+  end
+  def valid_query(:Observation_mutation, observation_meta_id) do
+    query = """
+      mutation createObservation ($comment: String!, $metaId: ID!) {
+        observationMutation(
+          comment: $comment,
+          metaId: $metaId
+        ) {
+          id
+          comment
+          insertedAt
+          updatedAt
+          meta {
+            id
+            title
+            intro
+          }
+        }
+      }
+    """
+
+    params = %{
+      "comment" => "some comment",
+      "metaId" => "#{observation_meta_id}"
     }
 
     {query, params}

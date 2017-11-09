@@ -39,3 +39,17 @@ button[disabled]{
 .blj {
   margin-bottom: 8px;
 }
+
+.custom-select.is-invalid, 
+.form-control.is-invalid,
+.was-validated .custom-select:invalid,
+.was-validated .form-control:invalid {
+  border-color: #dc3545 !important;
+}
+
+.custom-select.is-valid,
+.form-control.is-valid,
+.was-validated .custom-select:valid,
+.was-validated .form-control:valid {
+  border-color: #28a745 !important;
+}

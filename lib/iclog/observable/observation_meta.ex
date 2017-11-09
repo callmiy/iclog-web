@@ -28,12 +28,30 @@ defmodule Iclog.Observable.ObservationMeta do
 
   ## Examples
 
-      iex> list()
-      [%ObservationMeta{}, ...]
+        iex> list()
+        [%ObservationMeta{}, ...]
+
+        iex> list(:with_observations)
+        [%ObservationMeta{id: _, observations: [%Observation{}]}, ...]
+
+        iex> list(:by_title, "titl")
+        [%ObservationMeta{id: _, observations: [%Observation{}]}, ...]
 
   """
   def list do
     Repo.all(ObservationMeta)
+  end
+  def list(:with_observations) do
+    Repo.all from obm in ObservationMeta,
+      join: ob in assoc(obm, :observations),
+      preload: [observations: ob]
+  end
+  def list(:by_title, title) do
+    title_ = "%#{title}%"
+    Repo.all from obm in ObservationMeta,
+      where: ilike(obm.title, ^title_),
+      join: ob in assoc(obm, :observations),
+      preload: [observations: ob]
   end
 
   @doc """
@@ -51,6 +69,7 @@ defmodule Iclog.Observable.ObservationMeta do
 
   """
   def get!(id), do: Repo.get!(ObservationMeta, id)
+  def get(id), do: Repo.get(ObservationMeta, id)
 
   @doc """
   Creates a observation_meta.

@@ -3,11 +3,14 @@ defmodule IclogWeb.Schema.ObservationTest do
   import Iclog.Observable.Observation.TestHelper
 
   alias Iclog.Observable.Observation
+  alias Iclog.Observable.ObservationMeta
+  alias Iclog.Observable.ObservationMeta.TestHelper, as: ObmHelper
   alias IclogWeb.Schema
 
   describe "query" do
     test ":observation_query" do
-      %Observation{id: id} = fixture()
+      %Observation{id: id_} = fixture()
+      id = Integer.to_string id_
 
       assert {
           :ok,
@@ -29,7 +32,7 @@ defmodule IclogWeb.Schema.ObservationTest do
               }
           }
       } = Absinthe.run(valid_query(:observation_query), Schema)
-        
+
     end
   end
 
@@ -47,6 +50,32 @@ defmodule IclogWeb.Schema.ObservationTest do
       assert {:ok, %{errors: _}} =
         Absinthe.run(query, Schema, variables: params)
     end
+
+    test ":Observation_mutation succeeds" do
+      %ObservationMeta{id: id} = ObmHelper.fixture()
+      obm_id = Integer.to_string id
+      {query, params} = valid_query(:Observation_mutation, id)
+
+      assert {:ok,
+                %{data:
+                  %{"observationMutation" =>
+                    %{
+                        "id" => _,
+                        "meta" => %{
+                          "id" => ^obm_id
+                        }
+                    }
+                  }
+                }
+            } =
+        Absinthe.run(query, Schema, variables: params)
+    end
+
+    test ":Observation_mutation errors" do
+      {query, params} = valid_query(:Observation_mutation, 0)
+
+      assert {:ok, %{errors: _}} =
+        Absinthe.run(query, Schema, variables: params)
+    end
   end
-  
 end
