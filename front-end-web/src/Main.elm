@@ -4,7 +4,7 @@ import Html
 import Phoenix
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
 import Phoenix.Channel as Channel
-import Observation.Model as Observation
+import Observation.App as Observation
 import View
 import Model exposing (Model, Msg)
 import Store exposing (Flag)

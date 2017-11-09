@@ -5,7 +5,7 @@ module Page
         , getPage
         )
 
-import Observation.Model as ObservationPage
+import Observation.App as ObservationPage
 
 
 type Page

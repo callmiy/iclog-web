@@ -10,7 +10,7 @@ import Set
 import Css
 import SharedStyles exposing (..)
 import Observation.Styles exposing (observationNamespace)
-import Observation.Model as Model exposing (Model, Msg(..))
+import Observation.App as Model exposing (Model, Msg(..))
 import Observation.Types exposing (CreateObservationWithMeta)
 import Observation.MetaAutocomplete as MetaAutocomplete
 import Observation.Utils exposing (stringGt)

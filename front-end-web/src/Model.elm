@@ -6,7 +6,7 @@ module Model
         , update
         )
 
-import Observation.Model as Observation
+import Observation.App as Observation
 import Page exposing (Page, PageState(..))
 import Store exposing (Flag, Store)
 

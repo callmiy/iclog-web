@@ -1,4 +1,4 @@
-module Observation.Model
+module Observation.App
     exposing
         ( Model
         , Msg(..)
