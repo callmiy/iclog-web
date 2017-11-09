@@ -17,6 +17,7 @@ import Observation.Channel as ObservationChannel exposing (ChannelState, Paginat
 import Observation.List.App as ListApp
 import Phoenix.Channel as Channel exposing (Channel)
 import Utils as GUtils exposing (defaultPagination)
+import Observation.Types exposing (Observation)
 
 
 subscriptions : Model -> Sub Msg
@@ -109,7 +110,13 @@ update msg ({ showing } as model) store =
                 updatedModel =
                     case externalMsg of
                         New.ObservationCreated data ->
-                            { model | showing = ShowNew newSubModel }
+                            let
+                                model_ =
+                                    insertObservation data model
+                            in
+                                { model_
+                                    | showing = ShowNew newSubModel
+                                }
 
                         New.None ->
                             { model | showing = ShowNew newSubModel }
@@ -146,3 +153,16 @@ update msg ({ showing } as model) store =
 
         ( NoOp, _ ) ->
             ( model, Cmd.none )
+
+
+insertObservation : Observation -> Model -> Model
+insertObservation observation ({ observations } as model) =
+    { model
+        | observations =
+            { observations
+                | entries =
+                    List.take
+                        10
+                        (observation :: observations.entries)
+            }
+    }

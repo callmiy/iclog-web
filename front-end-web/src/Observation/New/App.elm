@@ -17,7 +17,7 @@ import Form.Input as Input exposing (Input)
 import Phoenix
 import Store exposing (Store)
 import Observation.Types exposing (Observation, Meta, CreateObservationWithMeta, CreateMeta, emptyMeta, emptyString)
-import Observation.MetaAutocomplete as MetaAutocomplete
+import Observation.New.MetaAutocomplete as MetaAutocomplete
 import Observation.Channel as Channel exposing (ChannelState)
 import Html.Events exposing (onClick, onSubmit)
 import Html exposing (Html, Attribute)
@@ -28,7 +28,6 @@ import Css
 import SharedStyles exposing (..)
 import Observation.Styles exposing (observationNamespace)
 import Observation.Types exposing (CreateObservationWithMeta)
-import Observation.MetaAutocomplete as MetaAutocomplete
 import Observation.Utils as LUtils exposing (stringGt)
 import Utils as GUtils exposing ((=>))
 
@@ -185,11 +184,7 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                     Channel.CreateObservationSucceeds result ->
                         case result of
                             Ok data ->
-                                let
-                                    x =
-                                        Debug.log "\n\nCreateObservationSucceeds" data
-                                in
-                                    ( unSubmit model, Cmd.none ) => ObservationCreated data
+                                ( unSubmit model, Cmd.none ) => ObservationCreated data
 
                             Err err ->
                                 let

@@ -1,4 +1,4 @@
-module Observation.MetaAutocomplete
+module Observation.New.MetaAutocomplete
     exposing
         ( Model
         , Msg(SetAutoState)

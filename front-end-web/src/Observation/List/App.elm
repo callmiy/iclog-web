@@ -112,5 +112,14 @@ viewObservationRow { comment, insertedAt, meta } =
             ]
         , Html.td
             []
-            [ Html.text <| DateFormat.format "%a %d/%b/%y" insertedAt ]
+            [ Html.div
+                []
+                [ Html.div
+                    []
+                    [ Html.text <| DateFormat.format "%a %d/%b/%y" insertedAt ]
+                , Html.div
+                    []
+                    [ Html.text <| DateFormat.format "%l:%M %p" insertedAt ]
+                ]
+            ]
         ]

@@ -11,6 +11,7 @@ module Utils
         , makeDefaultPaginationParamsVar
         , defaultPaginationParamsVar
         , defaultPagination
+        , nonBreakingSpace
         )
 
 import Date exposing (Date)
@@ -108,3 +109,8 @@ dateTimeType =
                         Jd.fail err
             )
         |> customScalar DateTimeType
+
+
+nonBreakingSpace : String
+nonBreakingSpace =
+    " "
