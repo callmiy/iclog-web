@@ -27,7 +27,7 @@ config :iclog, IclogWeb.Endpoint,
     "https://floating-beach-95811.herokuapp.com"
   ]
 
-config :sling, Iclog.Repo,
+config :iclog, Iclog.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: System.get_env("DATABASE_URL"),
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
