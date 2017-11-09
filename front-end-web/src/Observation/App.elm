@@ -116,7 +116,7 @@ update msg ({ showing } as model) store =
                                     insertObservation data model
                             in
                                 { model_
-                                    | showing = ShowNew newSubModel
+                                    | showing = ShowList ListApp.init
                                 }
 
                         New.None ->
