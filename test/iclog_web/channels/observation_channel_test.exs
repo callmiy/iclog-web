@@ -11,7 +11,7 @@ defmodule IclogWeb.ObservationChannelTest do
   end
 
   defp init(_) do
-    {query, params} = valid_query(:paginated_observations)
+    {query, params} = valid_query(:paginated_observations, 1)
 
     {:ok, response, socket} =
     socket("user_id", %{some: :assign})
@@ -40,7 +40,7 @@ defmodule IclogWeb.ObservationChannelTest do
   describe "new_observation" do
     setup([:init])
 
-    test "new_observation with_meta replies with status ok, observation and meta", %{socket: socket} do
+    test "with_meta replies with status ok, observation and meta", %{socket: socket} do
       {query, params} = valid_query(:Observation_mutation_with_meta)
 
       ref = push socket, "new_observation", %{
@@ -57,7 +57,7 @@ defmodule IclogWeb.ObservationChannelTest do
       )
     end
 
-    test "new_observation with_meta replies with status error", %{socket: socket} do
+    test "with_meta replies with status error", %{socket: socket} do
       {query, params} = invalid_query(:Observation_mutation_with_meta)
 
       ref = push socket, "new_observation", %{
@@ -69,7 +69,7 @@ defmodule IclogWeb.ObservationChannelTest do
       assert_reply ref, :error, %{errors:  _}, 1000
     end
 
-    test "new_observation replies with status ok, observation and meta", %{socket: socket} do
+    test "replies with status ok, observation and meta", %{socket: socket} do
       meta = ObmHelper.fixture()
       {query, params} = valid_query(:Observation_mutation, meta.id)
 
@@ -86,7 +86,7 @@ defmodule IclogWeb.ObservationChannelTest do
       )
     end
 
-    test "new_observation replies with status error", %{socket: socket} do
+    test "replies with status error", %{socket: socket} do
       {query, params} = valid_query(:Observation_mutation, 0)
 
       ref = push socket, "new_observation", %{
@@ -101,7 +101,7 @@ defmodule IclogWeb.ObservationChannelTest do
   describe "search_metas_by_title" do
     setup([:init])
 
-    test "search_metas_by_title replies with status ok and  metas", %{socket: socket} do
+    test "replies with status ok and  metas", %{socket: socket} do
       insert(:observation)
 
       {query, params} = ObmHelper.valid_query(:observation_metas_by_title_query)
@@ -115,6 +115,40 @@ defmodule IclogWeb.ObservationChannelTest do
         ref,
         :ok,
         %{data:  %{"observationMetasByTitle" => [%{"id" => _, "title" => _}]}},
+        1000
+      )
+    end
+  end
+
+  describe "list_observations" do
+    setup([:init])
+
+    test "replies with status ok and list of observations", %{socket: socket} do
+      insert_list(11, :observation)
+
+      {query, params} = valid_query(:paginated_observations, 1)
+
+      ref = push socket, "list_observations", %{
+        "query" => query,
+        "params" => params
+      }
+
+      assert_reply(
+        ref,
+        :ok,
+        %{
+          data: %{
+            "paginatedObservations" => %{
+              "entries" => _,
+              "pagination" => %{
+                "totalEntries" => 11,
+                "pageNumber" => 1,
+                "pageSize" => 10,
+                "totalPages" => 2,
+              }
+            }
+          }
+        },
         1000
       )
     end

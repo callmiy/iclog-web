@@ -6,6 +6,7 @@ module Observation.Channel
         , channel
         , searchMetaByTitle
         , PaginatedObservations
+        , listObservations
         )
 
 import Phoenix.Channel as Channel exposing (Channel)
@@ -50,6 +51,10 @@ channel =
             |> Channel.onJoin (Joined << response)
             |> Channel.onLeave (\_ -> Left)
             |> Channel.withDebug
+
+
+
+-- HELPERS FOR MAKING REQUESTS TO CHANNEL
 
 
 createNew : CreateQueryVars -> Push ChannelState
@@ -107,6 +112,18 @@ searchMetaByTitle title =
             |> Push.onError SearchMetaByTitleFails
 
 
+listObservations : GUtils.PaginationParamsVars -> Push ChannelState
+listObservations vars =
+    let
+        ( payLoad, response ) =
+            listObservationsChannelParams vars
+    in
+        Push.init channelName "list_observations"
+            |> Push.withPayload payLoad
+            |> Push.onOk (ListObservationsSucceeds << response)
+            |> Push.onError ListObservationsFails
+
+
 listObservationsChannelParams :
     GUtils.PaginationParamsVars
     -> ( Je.Value, Jd.Value -> Result String PaginatedObservations )
@@ -122,18 +139,6 @@ listObservationsChannelParams vars =
                 ]
     in
         ( payLoad, response )
-
-
-listObservations : GUtils.PaginationParamsVars -> Push ChannelState
-listObservations vars =
-    let
-        ( payLoad, response ) =
-            listObservationsChannelParams vars
-    in
-        Push.init channelName "list_observations"
-            |> Push.withPayload payLoad
-            |> Push.onOk (ListObservationsSucceeds << response)
-            |> Push.onError ListObservationsFails
 
 
 

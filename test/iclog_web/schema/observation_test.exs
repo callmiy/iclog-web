@@ -40,10 +40,10 @@ defmodule IclogWeb.Schema.ObservationTest do
       } = Absinthe.run(valid_query(:observations), Schema)
     end
 
-    test ":paginated_observations_query" do
+    test ":paginated_observations_query page number 1 succeeds" do
       insert_list(11, :observation)
 
-      {query, params} = valid_query(:paginated_observations)
+      {query, params} = valid_query(:paginated_observations, 1)
 
       {:ok, %{
           data: %{
@@ -60,6 +60,8 @@ defmodule IclogWeb.Schema.ObservationTest do
         }
       } = Absinthe.run(query, Schema, variables: params)
 
+      assert length(obs) == 10
+
       assert %{
         "id" => _,
         "comment" => _,
@@ -70,7 +72,40 @@ defmodule IclogWeb.Schema.ObservationTest do
           "title" => _,
           "intro" => _,
         }
-      } = (List.first obs)
+      } = List.first(obs)
+    end
+
+    test ":paginated_observations_query page number 2 succeeds" do
+      insert_list(11, :observation)
+
+      {query, params} = valid_query(:paginated_observations, 2)
+
+      {:ok, %{
+          data: %{
+            "paginatedObservations" => %{
+              "entries" => obs,
+              "pagination" => %{
+                "totalEntries" => 11,
+                "pageNumber" => 2,
+                "pageSize" => 10,
+                "totalPages" => 2,
+              }
+            }
+          }
+        }
+      } = Absinthe.run(query, Schema, variables: params)
+
+      assert [%{
+        "id" => _,
+        "comment" => _,
+        "insertedAt" => _,
+        "updatedAt" => _,
+        "meta" => %{
+          "id" => _,
+          "title" => _,
+          "intro" => _,
+        }
+      }] = obs
     end
   end
 

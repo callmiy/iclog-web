@@ -20,9 +20,7 @@ defmodule IclogWeb.Schema.Types do
   end
 
   input_object :pagination_params do
-    field :page_number, non_null(:integer)
+    field :page, non_null(:integer)
     field :page_size, :integer
-    field :total_pages, :integer
-    field :total_entries, :integer
   end
 end

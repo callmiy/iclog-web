@@ -5,14 +5,18 @@ module Observation.List.App
         , update
         , view
         , init
+        , ExternalMsg(..)
         )
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
-import Observation.Channel as ObservationChannel exposing (PaginatedObservations)
+import Observation.Channel as Channel exposing (PaginatedObservations, ChannelState)
 import Observation.Types exposing (Observation)
 import Date.Format as DateFormat
 import Css
+import Utils as GUtils exposing (viewPagination, Pagination, (=>), toPaginationParamsVars)
+import Store exposing (Store)
+import Phoenix
 
 
 styles : List Css.Style -> Attribute msg
@@ -31,23 +35,65 @@ init =
 
 type Msg
     = NoOp
+    | Paginate Pagination
+    | ChannelMsg ChannelState
 
 
-type alias FromParent =
-    { observations : PaginatedObservations
-    }
+type ExternalMsg
+    = None
+    | NewObservations PaginatedObservations
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+type alias QueryStore =
+    { websocketUrl : Maybe String }
+
+
+queryStore : Store -> QueryStore
+queryStore store =
+    { websocketUrl = Store.getWebsocketUrl store }
+
+
+update : Msg -> Model -> QueryStore -> ( ( Model, Cmd Msg ), ExternalMsg )
+update msg model { websocketUrl } =
     case msg of
         NoOp ->
-            model ! []
+            model ! [] => None
+
+        Paginate pagination ->
+            let
+                cmd =
+                    toPaginationParamsVars pagination
+                        |> Channel.listObservations
+                        |> Phoenix.push (Maybe.withDefault "" websocketUrl)
+                        |> Cmd.map ChannelMsg
+            in
+                model ! [ cmd ] => None
+
+        ChannelMsg channelState ->
+            case channelState of
+                Channel.ListObservationsSucceeds result ->
+                    case result of
+                        Ok data ->
+                            model ! [] => (NewObservations data)
+
+                        Err err ->
+                            let
+                                x =
+                                    Debug.log "\n\n Channel.ListObservationsSucceeds err ->" err
+                            in
+                                model ! [] => None
+
+                _ ->
+                    model ! [] => None
 
 
-view : FromParent -> Model -> Html Msg
-view ({ observations } as fromParent) model =
-    viewTable observations.entries
+view : PaginatedObservations -> Model -> Html Msg
+view { entries, pagination } model =
+    Html.div
+        []
+        [ viewTable entries
+        , viewPagination pagination Paginate
+        ]
 
 
 viewTable : List Observation -> Html Msg

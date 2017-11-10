@@ -39,7 +39,7 @@ viewPage ({ showing } as model) =
 
         ShowList subModel ->
             ListApp.view
-                { observations = model.observations }
+                model.observations
                 subModel
                 |> Html.map ListMsg
 

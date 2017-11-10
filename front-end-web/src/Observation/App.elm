@@ -126,10 +126,18 @@ update msg ({ showing } as model) store =
 
         ( ListMsg subMsg, ShowList subModel ) ->
             let
-                ( newSubModel, cmd ) =
-                    ListApp.update subMsg subModel
+                ( ( newSubModel, cmd ), externalMsg ) =
+                    ListApp.update subMsg subModel store
+
+                newModel =
+                    case externalMsg of
+                        ListApp.NewObservations data ->
+                            { model | observations = data }
+
+                        ListApp.None ->
+                            model
             in
-                { model
+                { newModel
                     | showing = ShowList newSubModel
                 }
                     ! [ Cmd.map ListMsg cmd ]

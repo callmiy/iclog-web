@@ -12,12 +12,17 @@ module Utils
         , defaultPaginationParamsVar
         , defaultPagination
         , nonBreakingSpace
+        , viewPagination
+        , toPaginationParamsVars
         )
 
 import Date exposing (Date)
 import GraphQL.Request.Builder as Grb exposing (ValueSpec, NonNull, customScalar)
 import GraphQL.Request.Builder.Variable as Var exposing (VariableSpec, Variable)
 import Json.Decode as Jd exposing (Decoder)
+import Html exposing (Html)
+import Html.Attributes as Attr
+import Html.Events exposing (onClick)
 
 
 (=>) : a -> b -> ( a, b )
@@ -61,10 +66,8 @@ paginationGraphQlResponse =
 
 
 type alias PaginationParams =
-    { pageNumber : Int
+    { page : Int
     , pageSize : Maybe Int
-    , totalPages : Maybe Int
-    , totalEntries : Maybe Int
     }
 
 
@@ -80,20 +83,26 @@ defaultPaginationParamsVar =
 
 
 makeDefaultPaginationParamsVar : Int -> Maybe Int -> PaginationParamsVars
-makeDefaultPaginationParamsVar pageNumber maybePageSize =
+makeDefaultPaginationParamsVar page maybePageSize =
     PaginationParamsVars <|
-        PaginationParams pageNumber maybePageSize Nothing Nothing
+        PaginationParams page maybePageSize
 
 
 paginationVarSpec : VariableSpec Var.NonNull PaginationParams
 paginationVarSpec =
     Var.object
         "PaginationParams"
-        [ Var.field "pageNumber" .pageNumber Var.int
+        [ Var.field "page" .page Var.int
         , Var.field "pageSize" .pageSize (Var.nullable Var.int)
-        , Var.field "totalPages" .totalPages (Var.nullable Var.int)
-        , Var.field "totalEntries" .totalEntries (Var.nullable Var.int)
         ]
+
+
+toPaginationParamsVars : Pagination -> PaginationParamsVars
+toPaginationParamsVars { pageNumber, pageSize } =
+    PaginationParamsVars
+        { page = pageNumber
+        , pageSize = Just pageSize
+        }
 
 
 dateTimeType : ValueSpec NonNull DateTimeType Date vars
@@ -114,3 +123,39 @@ dateTimeType =
 nonBreakingSpace : String
 nonBreakingSpace =
     " "
+
+
+viewPagination :
+    Pagination
+    -> (Pagination -> msg)
+    -> Html msg
+viewPagination ({ pageNumber, totalPages } as pagination) nextPageMsg =
+    Html.div
+        [ Attr.style [ ( "text-align", "center" ) ] ]
+        [ Html.div
+            [ Attr.class "btn-group" ]
+            [ Html.button
+                [ Attr.type_ "button"
+                , Attr.class "btn btn-outline-secondary"
+                , Attr.disabled <| pageNumber < 2
+                , onClick <| nextPageMsg { pagination | pageNumber = pageNumber - 1 }
+                ]
+                [ Html.text "<" ]
+            , Html.button
+                [ Attr.type_ "button"
+                , Attr.class "btn btn-outline-secondary"
+                , Attr.disabled <| pageNumber == totalPages
+                , onClick <|
+                    nextPageMsg { pagination | pageNumber = pageNumber + 1 }
+                ]
+                [ Html.text ">" ]
+            ]
+        , Html.div
+            []
+            [ Html.text <|
+                "Page "
+                    ++ (toString pageNumber)
+                    ++ " of "
+                    ++ (toString totalPages)
+            ]
+        ]
