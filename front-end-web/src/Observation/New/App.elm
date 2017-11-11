@@ -419,6 +419,7 @@ viewNewMeta form_ =
                 titleField
                 [ Attr.placeholder "Title"
                 , Attr.value (Maybe.withDefault "" titleField.value)
+                , styles [ Css.marginTop (Css.rem 1.2) ]
                 ]
                 Nothing
                 FormMsg
