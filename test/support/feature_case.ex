@@ -12,7 +12,7 @@ defmodule Iclog.FeatureCase do
       import Iclog.DataCase
       import Iclog.Factory
 
-      import Iclog.Router.Helpers
+      import IclogWeb.Router.Helpers
     end
   end
 

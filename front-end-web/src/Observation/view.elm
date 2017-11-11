@@ -24,8 +24,16 @@ view ({ showing } as model) =
                 , Css.fontSize (Css.rem 1.3)
                 ]
             ]
-            [ changeViewIcon "New" "fa fa-plus-square" (ChangeDisplay NewApp)
-            , changeViewIcon "List" "fa fa-list" (ChangeDisplay ListApp_)
+            [ changeViewIcon
+                "new-observation-icon"
+                "New"
+                "fa fa-plus-square"
+                (ChangeDisplay NewApp)
+            , changeViewIcon
+                "list-observation-icon"
+                "List"
+                "fa fa-list"
+                (ChangeDisplay ListApp_)
             ]
         , viewPage model
         ]
@@ -44,8 +52,8 @@ viewPage ({ showing } as model) =
                 |> Html.map ListMsg
 
 
-changeViewIcon : String -> String -> Msg -> Html Msg
-changeViewIcon title classNames msg =
+changeViewIcon : String -> String -> String -> Msg -> Html Msg
+changeViewIcon id_ title classNames msg =
     Html.i
         [ Attr.class classNames
 
@@ -53,6 +61,7 @@ changeViewIcon title classNames msg =
         -- , Attr.attribute "data-placement" "bottom"
         , Attr.attribute "title" title
         , Attr.attribute "aria-hidden" "true"
+        , Attr.id id_
         , onClick msg
         , styles
             [ Css.cursor Css.pointer
