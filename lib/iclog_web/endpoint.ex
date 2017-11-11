@@ -1,6 +1,10 @@
 defmodule IclogWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :iclog
 
+  if Application.get_env(:iclog, :sql_sandbox) do
+    plug Phoenix.Ecto.SQL.Sandbox
+  end
+
   socket "/socket", IclogWeb.UserSocket
 
   plug Plug.Static.IndexHtml,

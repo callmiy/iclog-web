@@ -4,7 +4,7 @@ use Mix.Config
 # you can enable the server option below.
 config :iclog, IclogWeb.Endpoint,
   http: [port: 4001],
-  server: false
+  server: true
 
 # Print only warnings and errors during test
 config :logger, level: :warn
@@ -17,3 +17,9 @@ config :iclog, Iclog.Repo,
   database: "iclog_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
+
+config :iclog, :sql_sandbox, true
+config :wallaby,
+  screenshot_on_failure: true
+  # phantomjs: "C:\\Users\\maneptha\\AppData\\Roaming\\npm\\phantomjs.cmd"
+  # driver: Wallaby.Experimental.Chrome
