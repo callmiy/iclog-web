@@ -79,10 +79,10 @@ navLinks =
             [ text "Observables" ]
         , li
             [ class "lp" ]
-            [ a [ class "ln", href "#" ] [ text "Observation" ] ]
+            [ a [ class "ln" ] [ text "Observation" ] ]
         , li
             [ class "lp" ]
-            [ a [ class "ln", href "#" ] [ text "Sleep" ] ]
+            [ a [ class "ln" ] [ text "Sleep" ] ]
         ]
 
 

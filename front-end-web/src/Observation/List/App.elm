@@ -118,13 +118,7 @@ viewHeader =
             []
             [ Html.th
                 [ Attr.class "header headerSortDown" ]
-                [ Html.input
-                    [ Attr.class "bpa"
-                    , Attr.id "selectAll"
-                    , Attr.type_ "checkbox"
-                    ]
-                    []
-                ]
+                []
             , Html.th
                 [ Attr.class "header" ]
                 [ Html.text "Title" ]
@@ -143,8 +137,11 @@ viewObservationRow { comment, insertedAt, meta } =
     Html.tr
         [ styles [ Css.cursor Css.pointer ] ]
         [ Html.td []
-            [ Html.input
-                [ Attr.class "bpb", Attr.type_ "checkbox" ]
+            [ Html.i
+                [ Attr.class "bpb fa fa-eye"
+                , Attr.attribute "aria-hidden" "true"
+                , styles [ Css.cursor Css.pointer ]
+                ]
                 []
             ]
         , Html.td []
