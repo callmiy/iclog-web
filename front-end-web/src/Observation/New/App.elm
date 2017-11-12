@@ -47,6 +47,7 @@ type alias Model =
     , submitting : Bool
     , showingNewMetaForm : Bool
     , metaAutoComp : MetaAutocomplete.Model
+    , newCreated : Maybe Observation
     }
 
 
@@ -73,6 +74,7 @@ init =
     , submitting = False
     , showingNewMetaForm = False
     , metaAutoComp = MetaAutocomplete.init
+    , newCreated = Nothing
     }
 
 
@@ -90,7 +92,7 @@ queryStore store =
 
 
 update : Msg -> Model -> QueryStore -> ( Model, Cmd Msg )
-update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl } =
+update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl } as store) =
     case msg of
         NoOp ->
             ( model, Cmd.none )
@@ -138,16 +140,7 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                         newModel ! []
 
         Reset ->
-            { model
-                | form =
-                    Form.update
-                        (validate showingNewMetaForm)
-                        (Form.Reset initialFields)
-                        form
-                , serverError = Nothing
-                , metaAutoComp = MetaAutocomplete.init
-            }
-                => Cmd.none
+            model |> reset |> resetNew => Cmd.none
 
         FormMsg formMsg ->
             { model
@@ -155,10 +148,12 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                     (Form.update (validate showingNewMetaForm) formMsg form)
                 , serverError = Nothing
             }
+                |> resetNew
                 => Cmd.none
 
         ToggleViewNewMeta ->
             { model | showingNewMetaForm = not model.showingNewMetaForm }
+                |> resetNew
                 => Cmd.none
 
         ChannelMsg channelState ->
@@ -175,9 +170,12 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                 case channelState of
                     Channel.CreateObservationSucceeds result ->
                         case result of
-                            Ok _ ->
-                                unSubmit model
-                                    ! [ Router.goto Router.ObservationList RouteMsg ]
+                            Ok data ->
+                                model
+                                    |> unSubmit
+                                    |> reset
+                                    |> updateNew data
+                                    => Cmd.none
 
                             Err err ->
                                 let
@@ -218,10 +216,33 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                                     }
                             }
                     in
-                        newModel ! [ cmd ]
+                        resetNew newModel ! [ cmd ]
 
         RouteMsg route ->
             model ! [ Router.goto route RouteMsg ]
+
+
+reset : Model -> Model
+reset model =
+    { model
+        | form =
+            Form.update
+                (validate model.showingNewMetaForm)
+                (Form.Reset initialFields)
+                model.form
+        , serverError = Nothing
+        , metaAutoComp = MetaAutocomplete.init
+    }
+
+
+resetNew : Model -> Model
+resetNew model =
+    { model | newCreated = Nothing }
+
+
+updateNew : Observation -> Model -> Model
+updateNew obs model =
+    { model | newCreated = Just obs }
 
 
 
@@ -284,7 +305,8 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
     in
         Html.div
             []
-            [ Navigation.nav RouteMsg
+            [ Navigation.nav Router.ObservationNew RouteMsg
+            , viewNewInfo <| Maybe.andThen (\o -> Just o.id) model.newCreated
             , Html.form
                 [ onSubmit Submit
                 , Attr.novalidate True
@@ -308,6 +330,23 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
                 , formBtns label_ disableSubmitBtn disableResetBtn
                 ]
             ]
+
+
+viewNewInfo : Maybe String -> Html Msg
+viewNewInfo maybeId =
+    case maybeId of
+        Nothing ->
+            Html.text ""
+
+        Just id_ ->
+            Html.div
+                [ Attr.id "new-observation-created-info"
+                , Attr.class "new-observation-created-info alert alert-success"
+                , Attr.attribute "role" "alert"
+                , styles [ Css.cursor Css.pointer ]
+                , onClick <| RouteMsg <| Router.ObservationDetail id_
+                ]
+                [ Html.text "Success! Click for further details." ]
 
 
 viewMeta : Form () CreateObservationWithMeta -> Model -> Html Msg

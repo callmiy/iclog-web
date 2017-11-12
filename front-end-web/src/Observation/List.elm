@@ -122,8 +122,8 @@ update msg model { websocketUrl } =
 view : Model -> Html Msg
 view { entries, pagination } =
     Html.div
-        []
-        [ Navigation.nav RouteMsg
+        [ Attr.id "observation-list-view" ]
+        [ Navigation.nav Router.ObservationList RouteMsg
         , viewTable entries
         , viewPagination pagination Paginate
         ]

@@ -20,6 +20,7 @@ defmodule IclogWeb.Feature.ObservationTest do
 
   @new_meta_dismiss_icon_class_name "observationNewMetaDismiss"
   @reveal_meta_icon_id "reveal-new-meta-form-icon"
+  @new_created_alert_id "new-observation-created-info"
 
   @tag :integration
   # @tag :no_headless
@@ -105,11 +106,11 @@ defmodule IclogWeb.Feature.ObservationTest do
     # submit btn is enabled
     assert element_enabled?(submit_btn)
 
+    # and no alert showing that observation created
+    refute element?(:id, @new_created_alert_id)
+
     # When submit button is clicked
     click(submit_btn)
-
-    # the form disappears
-    refute wait_for_condition(false, &element?/2, [:id, "new-observable-form"])
 
     # and an observation, with its meta, is created
     assert wait_for_condition(
@@ -122,6 +123,12 @@ defmodule IclogWeb.Feature.ObservationTest do
       end,
       []
     )
+
+    # and all the fields are cleared
+    assert_controls_empty([title_control, comment_control, intro_control])
+
+    # and there is an alert showing observation created
+    assert element?(:id, @new_created_alert_id)
   end
 
   @tag :integration
@@ -175,12 +182,10 @@ defmodule IclogWeb.Feature.ObservationTest do
     submit_btn = find_element(:name, @submit_btn_name)
     assert element_enabled?(submit_btn)
 
+    refute element?(:id, @new_created_alert_id)
+
     # When submit button is clicked
     click(submit_btn)
-
-    # the form disappears
-    refute wait_for_condition(false, &element?/2, [:id, "new-observable-form"])
-
     # and an observation, with its meta, is created
     assert wait_for_condition(
       true,
@@ -189,6 +194,10 @@ defmodule IclogWeb.Feature.ObservationTest do
       end,
       []
     )
+
+    # and all the fields are cleared
+    assert_controls_empty([title_control, comment_control])
+    assert element?(:id, @new_created_alert_id)
   end
 
   defp control_validate_string_lenght(ops) do

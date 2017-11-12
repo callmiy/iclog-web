@@ -12,8 +12,8 @@ styles =
     Css.asPairs >> Attr.style
 
 
-nav : Msg msg -> Html msg
-nav msg =
+nav : Route -> Msg msg -> Html msg
+nav showing msg =
     Html.div
         [ styles [ Css.height (Css.pct 100) ] ]
         [ Html.div
@@ -27,11 +27,13 @@ nav msg =
                 "New"
                 "fa fa-plus-square"
                 (msg Router.ObservationNew)
+                (showing == Router.ObservationNew)
             , changeViewIcon
                 "list-observables-nav-icon"
                 "List"
                 "fa fa-list"
                 (msg Router.ObservationList)
+                (showing == Router.ObservationList)
             ]
         ]
 
@@ -41,22 +43,37 @@ changeViewIcon :
     -> String
     -> String
     -> msg
+    -> Bool
     -> Html msg
-changeViewIcon id_ title classNames msg =
-    Html.i
-        [ Attr.class classNames
+changeViewIcon id_ title classNames msg showing =
+    let
+        styles_ others =
+            styles
+                ([ Css.paddingLeft (Css.px 0)
+                 , Css.display Css.inline
+                 , Css.marginRight (Css.rem 0.75)
+                 ]
+                    ++ others
+                )
 
-        -- , Attr.attribute "data-toggle" "tooltip"
-        -- , Attr.attribute "data-placement" "bottom"
-        , Attr.attribute "title" title
-        , Attr.attribute "aria-hidden" "true"
-        , Attr.id id_
-        , onClick msg
-        , styles
-            [ Css.cursor Css.pointer
-            , Css.paddingLeft (Css.px 0)
-            , Css.display Css.inline
-            , Css.marginRight (Css.rem 0.75)
+        attrs_ =
+            [ Attr.class classNames
+
+            -- , Attr.attribute "data-toggle" "tooltip"
+            -- , Attr.attribute "data-placement" "bottom"
+            , Attr.attribute "title" title
+            , Attr.attribute "aria-hidden" "true"
+            , Attr.id id_
             ]
-        ]
-        []
+
+        attrs =
+            if showing then
+                (styles_ [ Css.cursor Css.notAllowed ]) :: attrs_
+            else
+                [ (styles_ [ Css.cursor Css.pointer ]) ]
+                    ++ [ onClick msg ]
+                    ++ attrs_
+    in
+        Html.i
+            attrs
+            []
