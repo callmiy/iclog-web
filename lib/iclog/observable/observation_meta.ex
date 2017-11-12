@@ -49,6 +49,11 @@ defmodule Iclog.Observable.ObservationMeta do
   def list(:by_title, title) do
     title_ = "%#{title}%"
     Repo.all from obm in ObservationMeta,
+      where: ilike(obm.title, ^title_)
+  end
+  def list(:by_title, :with_observations, title) do
+    title_ = "%#{title}%"
+    Repo.all from obm in ObservationMeta,
       where: ilike(obm.title, ^title_),
       join: ob in assoc(obm, :observations),
       preload: [observations: ob]

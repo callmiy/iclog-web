@@ -6,11 +6,7 @@ defmodule IclogWeb.ObservationChannelTest do
   alias IclogWeb.ObservationChannel
   alias Iclog.Observable.ObservationMeta.TestHelper, as: ObmHelper
 
-  defp createObservation(_) do
-    {:ok, observation: insert(:observation)}
-  end
-
-  defp init(_) do
+  setup do
     {query, params} = valid_query(:paginated_observations, 1)
 
     {:ok, response, socket} =
@@ -24,22 +20,7 @@ defmodule IclogWeb.ObservationChannelTest do
     {:ok, socket: socket, socket_response: response}
   end
 
-  describe "socket response" do
-    setup [:createObservation, :init]
-
-    test "socket response", %{socket_response: response} do
-      assert %{
-        data: %{"paginatedObservations" => %{
-          "entries" => [%{}],
-          "pagination" => %{},
-        }}
-      } = response
-    end
-  end
-
   describe "new_observation" do
-    setup([:init])
-
     test "with_meta replies with status ok, observation and meta", %{socket: socket} do
       {query, params} = valid_query(:Observation_mutation_with_meta)
 
@@ -99,10 +80,8 @@ defmodule IclogWeb.ObservationChannelTest do
   end
 
   describe "search_metas_by_title" do
-    setup([:init])
-
     test "replies with status ok and  metas", %{socket: socket} do
-      insert(:observation)
+      insert(:observation_meta)
 
       {query, params} = ObmHelper.valid_query(:observation_metas_by_title_query, "som")
 
@@ -121,8 +100,6 @@ defmodule IclogWeb.ObservationChannelTest do
   end
 
   describe "list_observations" do
-    setup([:init])
-
     test "replies with status ok and list of observations", %{socket: socket} do
       insert_list(11, :observation)
 

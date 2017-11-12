@@ -25,9 +25,21 @@ defmodule IclogWeb.Schema.ObservationMeta do
 
     field :observation_metas_by_title, list_of(:observation_meta) do
       arg :title, non_null(:string)
+      arg :with_observations, :boolean
 
       resolve fn(args, _info) ->
-        {:ok, ObservationMeta.list(:by_title, Map.get(args, :title))}
+        {with_observations, params} = Map.pop(args, :with_observations)
+
+        metas = if with_observations do
+          ObservationMeta.list(
+            :by_title,
+            :with_observations,
+            Map.get(params, :title)
+          )
+        else
+          ObservationMeta.list(:by_title, Map.get(params, :title))
+        end
+        {:ok, metas}
       end
     end
   end

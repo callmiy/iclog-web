@@ -127,8 +127,8 @@ defmodule IclogWeb.Feature.ObservationTest do
   @tag :integration
   # @tag :no_headless
   test "Create observable with existing meta", _meta do
-    insert(:observation, %{observation_meta: %{title: @title_text}})
-    assert 1 == length Observation.list(:with_meta)
+    insert(:observation_meta, %{title: @title_text})
+    assert 0 == length Observation.list(:with_meta)
 
     navigate_to base_url()
     click find_element(:id, "new-observable-nav-icon")
@@ -185,7 +185,7 @@ defmodule IclogWeb.Feature.ObservationTest do
     assert wait_for_condition(
       true,
       fn() ->
-          2 == length Observation.list(:with_meta)
+          1 == length Observation.list(:with_meta)
       end,
       []
     )
