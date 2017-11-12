@@ -104,7 +104,7 @@ defmodule IclogWeb.ObservationChannelTest do
     test "replies with status ok and  metas", %{socket: socket} do
       insert(:observation)
 
-      {query, params} = ObmHelper.valid_query(:observation_metas_by_title_query)
+      {query, params} = ObmHelper.valid_query(:observation_metas_by_title_query, "som")
 
       ref = push socket, "search_metas_by_title", %{
         "query" => query,

@@ -3,15 +3,15 @@ defmodule Iclog.Observable.ObservationMeta.TestHelper do
 
   def valid_attrs do
     %{intro: "some intro", title: "some title"}
-  end 
+  end
 
   def update_attrs do
     %{intro: "some updated intro", title: "some updated title"}
-  end 
+  end
 
   def invalid_attrs do
     %{intro: nil, title: nil}
-  end 
+  end
 
   def fixture(attrs \\ %{}) do
     {:ok, meta} =
@@ -39,24 +39,20 @@ defmodule Iclog.Observable.ObservationMeta.TestHelper do
     }
     """
   end
-  def valid_query(:observation_metas_by_title_query) do
+  def valid_query(:observation_metas_by_title_query, title) do
     query = """
-    {
-      observationMetasByTitle(title: "som") {
-        id
-        title
-        intro
-        inserted_at
-        updated_at
-        observations {
+      query ($title: String!) {
+        observationMetasByTitle(title: $title) {
           id
-          comment
+          title
+          intro
+          inserted_at
+          updated_at
         }
       }
-    }
     """
 
-    params = %{"title" => valid_attrs()[:title]}
+    params = %{"title" => title}
 
     {query, params}
   end
