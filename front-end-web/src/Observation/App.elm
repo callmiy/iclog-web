@@ -142,11 +142,17 @@ update msg ({ showing } as model) store =
                 }
                     ! [ Cmd.map ListMsg cmd ]
 
+        ( ChangeDisplay NewApp, ShowNew _ ) ->
+            model ! []
+
         ( ChangeDisplay NewApp, _ ) ->
             { model
                 | showing = ShowNew New.init
             }
                 ! []
+
+        ( ChangeDisplay ListApp_, ShowList _ ) ->
+            model ! []
 
         ( ChangeDisplay ListApp_, _ ) ->
             { model
@@ -154,14 +160,11 @@ update msg ({ showing } as model) store =
             }
                 ! []
 
-        ( NewMsg _, ShowList _ ) ->
-            model ! []
-
-        ( ListMsg _, ShowNew _ ) ->
-            model ! []
-
         ( NoOp, _ ) ->
             ( model, Cmd.none )
+
+        _ ->
+            model ! []
 
 
 insertObservation : Observation -> Model -> Model
