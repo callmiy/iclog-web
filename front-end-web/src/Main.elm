@@ -9,7 +9,6 @@ import View
 import Model exposing (Model, Msg)
 import Store exposing (Flag)
 import Page
-import Observation.Channel as ObservationChannel
 
 
 subs : Model -> Sub Msg

@@ -25,12 +25,12 @@ view ({ showing } as model) =
                 ]
             ]
             [ changeViewIcon
-                "new-observation-icon"
+                "new-observable-nav-icon"
                 "New"
                 "fa fa-plus-square"
                 (ChangeDisplay NewApp)
             , changeViewIcon
-                "list-observation-icon"
+                "list-observables-nav-icon"
                 "List"
                 "fa fa-list"
                 (ChangeDisplay ListApp_)

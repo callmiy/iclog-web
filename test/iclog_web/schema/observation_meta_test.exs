@@ -3,14 +3,24 @@ defmodule IclogWeb.Schema.ObservationMetaTest do
   import Iclog.Observable.ObservationMeta.TestHelper
 
   alias Iclog.Observable.Observation
+  alias Iclog.Observable.ObservationMeta
   alias IclogWeb.Schema
-  alias Iclog.Observable.Observation.TestHelper, as: ObHelper
+
+  defp make_observation_with_meta(_) do
+    %Observation{
+      id: ob_id_,
+      observation_meta: %ObservationMeta{id: meta_id_}
+    } = insert(:observation)
+
+    ob_id = Integer.to_string ob_id_
+    meta_id = Integer.to_string meta_id_
+    {:ok, ob_id: ob_id, meta_id: meta_id}
+  end
 
   describe "query" do
-    setup [:init]
+    setup [:make_observation_with_meta]
 
     test ":observation_metas", %{meta_id: meta_id, ob_id: ob_id} do
-
       assert {
           :ok,
           %{data:
@@ -32,8 +42,8 @@ defmodule IclogWeb.Schema.ObservationMetaTest do
       } = Absinthe.run(valid_query(:observation_metas_query), Schema)
     end
 
-    test ":observation_metas_by_title", %{meta_id: meta_id, ob_id: ob_id}  do
-      {query, query_params} = valid_query(:observation_metas_by_title_query)
+    test ":observation_metas_by_title", %{meta_id: meta_id}  do
+      {query, query_params} = valid_query(:observation_metas_by_title_query, "som")
 
       assert {
           :ok,
@@ -46,24 +56,11 @@ defmodule IclogWeb.Schema.ObservationMetaTest do
                       "intro" => _,
                       "inserted_at" => _,
                       "updated_at" => _,
-                      "observations" => [
-                        %{"id" => ^ob_id}
-                      ]
                     }
                   ]
               }
           }
       } = Absinthe.run(query, Schema, variables: query_params)
     end
-  end
-
-  defp init(%{describe: "query"}) do
-    %{observation_meta_id: meta_id_} = ob_parms = ObHelper.valid_attrs(:with_meta)
-    meta_id = Integer.to_string meta_id_
-
-    %Observation{id: ob_id_} = ObHelper.fixture(ob_parms)
-    ob_id = Integer.to_string ob_id_
-
-    {:ok, meta_id: meta_id, ob_id: ob_id}
   end
 end
