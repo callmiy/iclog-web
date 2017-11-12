@@ -5,11 +5,15 @@ module Page
         , getPage
         )
 
-import Observation.App as ObservationPage
+import Observation.Detail.App as ObservationDetail
+import Observation.List as ObservationList
+import Observation.New.App as ObservationNew
 
 
 type Page
-    = Observation ObservationPage.Model
+    = ObservationDetail ObservationDetail.Model
+    | ObservationList ObservationList.Model
+    | ObservationNew ObservationNew.Model
 
 
 type PageState

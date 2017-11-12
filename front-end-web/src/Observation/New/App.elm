@@ -2,7 +2,6 @@ module Observation.New.App
     exposing
         ( Model
         , Msg(..)
-        , ExternalMsg(..)
         , init
         , update
         , queryStore
@@ -30,6 +29,8 @@ import Observation.Styles exposing (observationNamespace)
 import Observation.Types exposing (CreateObservationWithMeta)
 import Observation.Utils as LUtils exposing (stringGt)
 import Utils as GUtils exposing ((=>))
+import Router exposing (Route)
+import Observation.Navigation as Navigation
 
 
 subscriptions : Model -> Sub Msg
@@ -57,11 +58,7 @@ type Msg
     | Reset
     | ToggleViewNewMeta
     | MetaAutocompleteMsg MetaAutocomplete.Msg
-
-
-type ExternalMsg
-    = None
-    | ObservationCreated Observation
+    | RouteMsg Route
 
 
 initialFields : List ( String, Field )
@@ -92,11 +89,11 @@ queryStore store =
     { websocketUrl = Store.getWebsocketUrl store }
 
 
-update : Msg -> Model -> QueryStore -> ( ( Model, Cmd Msg ), ExternalMsg )
+update : Msg -> Model -> QueryStore -> ( Model, Cmd Msg )
 update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl } =
     case msg of
         NoOp ->
-            ( model, Cmd.none ) => None
+            ( model, Cmd.none )
 
         Submit ->
             let
@@ -122,7 +119,6 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                               }
                             , cmd
                             )
-                                => None
 
                     ( False, Just { comment }, Just meta ) ->
                         let
@@ -137,10 +133,9 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                               }
                             , cmd
                             )
-                                => None
 
                     _ ->
-                        newModel ! [] => None
+                        newModel ! []
 
         Reset ->
             { model
@@ -153,7 +148,6 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                 , metaAutoComp = MetaAutocomplete.init
             }
                 => Cmd.none
-                => None
 
         FormMsg formMsg ->
             { model
@@ -162,12 +156,10 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                 , serverError = Nothing
             }
                 => Cmd.none
-                => None
 
         ToggleViewNewMeta ->
             { model | showingNewMetaForm = not model.showingNewMetaForm }
                 => Cmd.none
-                => None
 
         ChannelMsg channelState ->
             let
@@ -183,31 +175,32 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                 case channelState of
                     Channel.CreateObservationSucceeds result ->
                         case result of
-                            Ok data ->
-                                ( unSubmit model, Cmd.none ) => ObservationCreated data
+                            Ok _ ->
+                                unSubmit model
+                                    ! [ Router.goto Router.ObservationList RouteMsg ]
 
                             Err err ->
                                 let
                                     x =
                                         Debug.log "NewWithMetaSucceeds decode error" err
                                 in
-                                    unknownServerError ! [] => None
+                                    unknownServerError ! []
 
                     Channel.CreateObservationFails val ->
                         let
                             x =
                                 Debug.log "NewWithMetaFails" val
                         in
-                            unknownServerError ! [] => None
+                            unknownServerError ! []
 
                     _ ->
-                        ( model, Cmd.none ) => None
+                        ( model, Cmd.none )
 
         MetaAutocompleteMsg subMsg ->
             case ( subMsg, metaAutoComp.editingAutocomp ) of
                 ( MetaAutocomplete.SetAutoState _, False ) ->
                     --This will make sure we only trigger autocomplete when typing in the autocomplete input
-                    model ! [] => None
+                    model ! []
 
                 _ ->
                     let
@@ -225,7 +218,10 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) { websocketUrl 
                                     }
                             }
                     in
-                        newModel ! [ cmd ] => None
+                        newModel ! [ cmd ]
+
+        RouteMsg route ->
+            model ! [ Router.goto route RouteMsg ]
 
 
 
@@ -286,27 +282,31 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
             (queryEmpty && formIsEmpty)
                 || (submitting == True)
     in
-        Html.form
-            [ onSubmit Submit
-            , Attr.novalidate True
-            , Attr.id "new-observable-form"
-            , styles styles_
-            ]
-            [ FormUtils.textualErrorBox serverError
-            , viewMeta form model
-            , Html.fieldset
-                []
-                [ FormUtils.formGrp
-                    Input.textArea
-                    commentField
-                    [ Attr.placeholder "Comment"
-                    , Attr.value (Maybe.withDefault "" commentField.value)
-                    , Attr.name "new-observation-comment"
-                    ]
-                    { errorId = "new-observation-comment-error-id", errors = Nothing }
-                    FormMsg
+        Html.div
+            []
+            [ Navigation.nav RouteMsg
+            , Html.form
+                [ onSubmit Submit
+                , Attr.novalidate True
+                , Attr.id "new-observable-form"
+                , styles styles_
                 ]
-            , formBtns label_ disableSubmitBtn disableResetBtn
+                [ FormUtils.textualErrorBox serverError
+                , viewMeta form model
+                , Html.fieldset
+                    []
+                    [ FormUtils.formGrp
+                        Input.textArea
+                        commentField
+                        [ Attr.placeholder "Comment"
+                        , Attr.value (Maybe.withDefault "" commentField.value)
+                        , Attr.name "new-observation-comment"
+                        ]
+                        { errorId = "new-observation-comment-error-id", errors = Nothing }
+                        FormMsg
+                    ]
+                , formBtns label_ disableSubmitBtn disableResetBtn
+                ]
             ]
 
 

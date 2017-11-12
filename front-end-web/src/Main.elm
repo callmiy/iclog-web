@@ -4,11 +4,13 @@ import Html
 import Phoenix
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
 import Phoenix.Channel as Channel
-import Observation.App as Observation
 import View
 import Model exposing (Model, Msg)
 import Store exposing (Flag)
 import Page
+import Observation.Detail.App as ObservationDetail
+import Observation.New.App as ObservationNew
+import Observation.Channel as ObservationChannel
 
 
 subs : Model -> Sub Msg
@@ -19,8 +21,14 @@ subs model =
 
         subs =
             case page of
-                Page.Observation subModel ->
-                    [ Sub.map Model.ObservationMsg <| Observation.subscriptions subModel ]
+                Page.ObservationNew subModel ->
+                    [ Sub.map Model.ObservationNewMsg <| ObservationNew.subscriptions subModel ]
+
+                Page.ObservationList subModel ->
+                    []
+
+                Page.ObservationDetail subModel ->
+                    [ Sub.map Model.ObservationDetailMsg <| ObservationDetail.subscriptions subModel ]
     in
         Sub.batch
             ([ phoenixSubscription model ] ++ subs)
@@ -39,13 +47,9 @@ phoenixSubscription ({ store, pageState } as model) =
             let
                 page =
                     Page.getPage pageState
-
-                channels =
-                    case page of
-                        Page.Observation _ ->
-                            [ Channel.map Model.ObservationMsg Observation.channels ]
             in
-                Phoenix.connect (socket url) channels
+                Phoenix.connect (socket url)
+                    [ Channel.map Model.ObservationChannelMsg ObservationChannel.channel ]
 
         Nothing ->
             Sub.none

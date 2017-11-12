@@ -1,12 +1,10 @@
-module Observation.View exposing (view)
+module Observation.Navigation exposing (nav)
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
 import Css
-import Observation.App as Model exposing (Model, Msg(..), App(..), Showing(..))
-import Observation.New.App as New
-import Observation.List.App as ListApp
+import Router exposing (Route, Msg)
 
 
 styles : List Css.Style -> Attribute msg
@@ -14,8 +12,8 @@ styles =
     Css.asPairs >> Attr.style
 
 
-view : Model -> Html Msg
-view ({ showing } as model) =
+nav : Msg msg -> Html msg
+nav msg =
     Html.div
         [ styles [ Css.height (Css.pct 100) ] ]
         [ Html.div
@@ -28,31 +26,22 @@ view ({ showing } as model) =
                 "new-observable-nav-icon"
                 "New"
                 "fa fa-plus-square"
-                (ChangeDisplay NewApp)
+                (msg Router.ObservationNew)
             , changeViewIcon
                 "list-observables-nav-icon"
                 "List"
                 "fa fa-list"
-                (ChangeDisplay ListApp_)
+                (msg Router.ObservationList)
             ]
-        , viewPage model
         ]
 
 
-viewPage : Model -> Html Msg
-viewPage ({ showing } as model) =
-    case showing of
-        ShowNew subModel ->
-            New.view subModel |> Html.map NewMsg
-
-        ShowList subModel ->
-            ListApp.view
-                model.observations
-                subModel
-                |> Html.map ListMsg
-
-
-changeViewIcon : String -> String -> String -> Msg -> Html Msg
+changeViewIcon :
+    String
+    -> String
+    -> String
+    -> msg
+    -> Html msg
 changeViewIcon id_ title classNames msg =
     Html.i
         [ Attr.class classNames
