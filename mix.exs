@@ -47,7 +47,7 @@ defmodule Iclog.Mixfile do
       {:absinthe, "~> 1.3"},
       {:scrivener_ecto, "~> 1.3"},
       {:ex_machina, "~> 2.1"},
-      # {:corsica, "~> 1.0"},
+      {:hound, "~> 1.0", only: [:test]},
     ]
   end
 

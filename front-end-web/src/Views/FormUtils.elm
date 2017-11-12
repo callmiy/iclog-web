@@ -29,7 +29,7 @@ formControlValidator :
     -> List (Attribute msg)
     -> Maybe a
     -> ( List (Attribute msg), Bool, Maybe (ErrorValue e) )
-formControlValidator state additionalAttributes otherErrors =
+formControlValidator state additionalAttributes errors =
     let
         attributes =
             [ Attr.classList
@@ -47,46 +47,53 @@ formControlValidator state additionalAttributes otherErrors =
             controlValidityState state
 
         isValid =
-            isValid_ && (otherErrors == Nothing)
+            isValid_ && (errors == Nothing)
 
         isInvalid =
-            isInvalid_ || (otherErrors /= Nothing)
+            isInvalid_ || (errors /= Nothing)
     in
         ( attributes, isInvalid, error )
+
+
+type alias FormGrpErrorSetting =
+    { errorId : String
+    , errors : Maybe String
+    }
 
 
 formGrp :
     Input e String
     -> FieldState e String
     -> List (Attribute Form.Msg)
-    -> Maybe String
+    -> FormGrpErrorSetting
     -> (Form.Msg -> msg)
     -> Html msg
-formGrp control state additionalAttributes otherErrors msg =
+formGrp control state additionalAttributes ({ errors } as errorSetting) msg =
     let
         ( attributes, isInvalid, error ) =
-            formControlValidator state additionalAttributes otherErrors
+            formControlValidator state additionalAttributes errors
     in
         Html.map msg <|
             div
                 [ Attr.class "blj" ]
                 [ control state attributes
-                , errorMessage error isInvalid
-                , textualError otherErrors
+                , errorMessage errorSetting error isInvalid
+                , textualError errorSetting
                 ]
 
 
 errorMessage :
-    Maybe (ErrorValue e)
+    FormGrpErrorSetting
+    -> Maybe (ErrorValue e)
     -> Bool
     -> Html msg
-errorMessage maybeError isInvalid =
+errorMessage errorSetting maybeError isInvalid =
     case ( maybeError, isInvalid ) of
         ( Just error, True ) ->
-            error
-                |> toString
-                |> Just
-                |> textualError
+            textualError
+                { errorSetting
+                    | errors = Just <| toString error
+                }
 
         _ ->
             text ""
@@ -120,9 +127,9 @@ controlValidityState state =
         ( isValid, isInvalid )
 
 
-textualError : Maybe String -> Html msg
-textualError maybeError =
-    case maybeError of
+textualError : FormGrpErrorSetting -> Html msg
+textualError { errors, errorId } =
+    case errors of
         Nothing ->
             text ""
 
@@ -133,6 +140,7 @@ textualError maybeError =
                     , ( "fontWeight", "500" )
                     , ( "color", "#9f3a38" )
                     ]
+                , Attr.id errorId
                 ]
                 [ text error ]
 

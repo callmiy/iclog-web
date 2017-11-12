@@ -289,6 +289,7 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
         Html.form
             [ onSubmit Submit
             , Attr.novalidate True
+            , Attr.id "new-observable-form"
             , styles styles_
             ]
             [ FormUtils.textualErrorBox serverError
@@ -300,8 +301,9 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
                     commentField
                     [ Attr.placeholder "Comment"
                     , Attr.value (Maybe.withDefault "" commentField.value)
+                    , Attr.name "new-observation-comment"
                     ]
-                    Nothing
+                    { errorId = "new-observation-comment-error-id", errors = Nothing }
                     FormMsg
                 ]
             , formBtns label_ disableSubmitBtn disableResetBtn
@@ -380,6 +382,7 @@ viewMetaSelect ({ showingNewMetaForm, metaAutoComp } as model) =
                 [ input
                 , Html.span
                     [ Attr.class "input-group-addon"
+                    , Attr.id "reveal-new-meta-form-icon"
                     , styles [ Css.cursor Css.pointer ]
                     , onClick ToggleViewNewMeta
                     ]
@@ -387,7 +390,11 @@ viewMetaSelect ({ showingNewMetaForm, metaAutoComp } as model) =
                 ]
              ]
                 ++ menus
-                ++ [ FormUtils.textualError error ]
+                ++ [ FormUtils.textualError
+                        { errors = error
+                        , errorId = "select-meta-input-error-id"
+                        }
+                   ]
             )
 
 
@@ -406,6 +413,7 @@ viewNewMeta form_ =
                 [ class [ NewMetaLegend ] ]
                 [ Html.span
                     [ Attr.class "fa fa-minus-square"
+                    , Attr.id "dismiss-new-meta-form-icon"
                     , class [ NewMetaDismiss ]
                     , onClick ToggleViewNewMeta
                     ]
@@ -419,17 +427,19 @@ viewNewMeta form_ =
                 titleField
                 [ Attr.placeholder "Title"
                 , Attr.value (Maybe.withDefault "" titleField.value)
+                , Attr.name "new-observation-meta-title"
                 , styles [ Css.marginTop (Css.rem 1.2) ]
                 ]
-                Nothing
+                { errorId = "new-observation-meta-title-error-id", errors = Nothing }
                 FormMsg
             , FormUtils.formGrp
                 Input.textArea
                 introField
                 [ Attr.placeholder "Intro"
+                , Attr.name "new-observation-meta-intro"
                 , Attr.value (Maybe.withDefault "" introField.value)
                 ]
-                Nothing
+                { errorId = "new-observation-meta-intro-error-id", errors = Nothing }
                 FormMsg
             ]
 
@@ -443,6 +453,7 @@ formBtns label_ disableSubmitBtn disableResetBtn =
             , Attr.class "btn btn-info"
             , Attr.type_ "submit"
             , Attr.disabled disableSubmitBtn
+            , Attr.name "new-observation-submit-btn"
             ]
             [ Html.span
                 [ Attr.class "fa fa-send"
@@ -459,6 +470,7 @@ formBtns label_ disableSubmitBtn disableResetBtn =
             , Attr.class "btn btn-outline-warning"
             , Attr.disabled disableResetBtn
             , Attr.type_ "button"
+            , Attr.name "new-observation-reset-btn"
             , onClick Reset
             ]
             [ Html.text "Reset" ]
