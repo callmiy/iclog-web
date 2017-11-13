@@ -2,9 +2,9 @@ module Observation.Navigation exposing (nav)
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
-import Html.Events exposing (onClick)
 import Css
 import Router exposing (Route, Msg)
+import Utils exposing ((=>))
 
 
 styles : List Css.Style -> Attribute msg
@@ -12,8 +12,8 @@ styles =
     Css.asPairs >> Attr.style
 
 
-nav : Route -> Msg msg -> Html msg
-nav showing msg =
+nav : Route -> Html msg
+nav currentRoute =
     Html.div
         [ styles [ Css.height (Css.pct 100) ] ]
         [ Html.div
@@ -26,14 +26,14 @@ nav showing msg =
                 "new-observable-nav-icon"
                 "New"
                 "fa fa-plus-square"
-                (msg Router.ObservationNew)
-                (showing == Router.ObservationNew)
+                (currentRoute == Router.ObservationNew)
+                Router.ObservationNew
             , changeViewIcon
                 "list-observables-nav-icon"
                 "List"
                 "fa fa-list"
-                (msg Router.ObservationList)
-                (showing == Router.ObservationList)
+                (currentRoute == Router.ObservationList)
+                Router.ObservationList
             ]
         ]
 
@@ -42,10 +42,10 @@ changeViewIcon :
     String
     -> String
     -> String
-    -> msg
     -> Bool
+    -> Route
     -> Html msg
-changeViewIcon id_ title classNames msg showing =
+changeViewIcon id_ title classNames showing route =
     let
         styles_ others =
             styles
@@ -58,22 +58,20 @@ changeViewIcon id_ title classNames msg showing =
 
         attrs_ =
             [ Attr.class classNames
-
-            -- , Attr.attribute "data-toggle" "tooltip"
-            -- , Attr.attribute "data-placement" "bottom"
             , Attr.attribute "title" title
             , Attr.attribute "aria-hidden" "true"
             , Attr.id id_
             ]
 
-        attrs =
+        ( attrs, domEl ) =
             if showing then
-                (styles_ [ Css.cursor Css.notAllowed ]) :: attrs_
+                (styles_ [ Css.cursor Css.notAllowed ])
+                    :: attrs_
+                    => Html.i
             else
                 [ (styles_ [ Css.cursor Css.pointer ]) ]
-                    ++ [ onClick msg ]
+                    ++ [ Router.href route ]
                     ++ attrs_
+                    => Html.a
     in
-        Html.i
-            attrs
-            []
+        domEl attrs []

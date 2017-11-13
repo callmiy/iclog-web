@@ -10,7 +10,6 @@ module Observation.List
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
-import Html.Events exposing (onClick)
 import Observation.Channel as Channel exposing (PaginatedObservations, ChannelState)
 import Observation.Types exposing (Observation)
 import Date.Format as DateFormat
@@ -58,7 +57,6 @@ type Msg
     = NoOp
     | Paginate Pagination
     | ChannelMsg ChannelState
-    | RouteMsg Route
 
 
 type alias QueryStore =
@@ -115,15 +113,12 @@ update msg model { websocketUrl } =
                 _ ->
                     model ! []
 
-        RouteMsg route ->
-            model ! [ Router.goto route RouteMsg ]
-
 
 view : Model -> Html Msg
 view { entries, pagination } =
     Html.div
         [ Attr.id "observation-list-view" ]
-        [ Navigation.nav Router.ObservationList RouteMsg
+        [ Navigation.nav Router.ObservationList
         , viewTable entries
         , viewPagination pagination Paginate
         ]
@@ -174,7 +169,7 @@ viewObservationRow { id, comment, insertedAt, meta } =
                 [ Attr.class "bpb fa fa-eye"
                 , Attr.attribute "aria-hidden" "true"
                 , styles [ Css.cursor Css.pointer ]
-                , onClick (RouteMsg <| Router.ObservationDetail id)
+                , Router.href <| Router.ObservationDetail id
                 ]
                 []
             ]

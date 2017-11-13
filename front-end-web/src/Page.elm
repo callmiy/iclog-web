@@ -14,6 +14,7 @@ type Page
     = ObservationDetail ObservationDetail.Model
     | ObservationList ObservationList.Model
     | ObservationNew ObservationNew.Model
+    | Blank
 
 
 type PageState

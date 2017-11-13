@@ -46,6 +46,9 @@ view ({ pageState } as model) =
 viewPage : Page -> Model -> Html Msg
 viewPage page model =
     case page of
+        Page.Blank ->
+            Html.text ""
+
         Page.ObservationNew subModel ->
             Html.map Model.ObservationNewMsg <| ObservationNew.view subModel
 

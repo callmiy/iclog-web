@@ -25,18 +25,9 @@ defmodule IclogWeb.Feature.ObservationTest do
   @tag :integration
   # @tag :no_headless
   test "Create observable with new meta", _meta do
-    navigate_to base_url()
+    navigate_to "/#/observations/new"
     assert visible_text({:class, "global-title"}) == "OBSERVABLES"
     assert visible_text({:class, "page-title"}) == "Observations"
-
-    # form to create observation are not present on page until user
-    # clicks icon to reveal form.
-    refute element?(:id, "new-observable-form")
-
-    # after the "+" icon is clicked, form is revealed showing
-    # form is revealed.
-    click find_element(:id, "new-observable-nav-icon")
-    assert {:ok, _} = search_element(:id, "new-observable-form")
 
     # submit and reset buttons are disabled
     submit_btn = find_element(:name, @submit_btn_name)
@@ -137,8 +128,7 @@ defmodule IclogWeb.Feature.ObservationTest do
     insert(:observation_meta, %{title: @title_text})
     assert 0 == length Observation.list(:with_meta)
 
-    navigate_to base_url()
-    click find_element(:id, "new-observable-nav-icon")
+    navigate_to "/#/observations/new"
 
     title_control = find_element(:id, "select-meta-input")
     control_validate_string_lenght(:no_valid_text, %{

@@ -59,7 +59,6 @@ type Msg
     | Reset
     | ToggleViewNewMeta
     | MetaAutocompleteMsg MetaAutocomplete.Msg
-    | RouteMsg Route
 
 
 initialFields : List ( String, Field )
@@ -218,9 +217,6 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
                     in
                         resetNew newModel ! [ cmd ]
 
-        RouteMsg route ->
-            model ! [ Router.goto route RouteMsg ]
-
 
 reset : Model -> Model
 reset model =
@@ -305,7 +301,7 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
     in
         Html.div
             []
-            [ Navigation.nav Router.ObservationNew RouteMsg
+            [ Navigation.nav Router.ObservationNew
             , viewNewInfo <| Maybe.andThen (\o -> Just o.id) model.newCreated
             , Html.form
                 [ onSubmit Submit
@@ -339,14 +335,14 @@ viewNewInfo maybeId =
             Html.text ""
 
         Just id_ ->
-            Html.div
+            Html.a
                 [ Attr.id "new-observation-created-info"
                 , Attr.class "new-observation-created-info alert alert-success"
                 , Attr.attribute "role" "alert"
-                , styles [ Css.cursor Css.pointer ]
-                , onClick <| RouteMsg <| Router.ObservationDetail id_
+                , styles [ Css.display Css.block ]
+                , Router.href <| Router.ObservationDetail id_
                 ]
-                [ Html.text "Success! Click for further details." ]
+                [ Html.text "Success! Click here for further details." ]
 
 
 viewMeta : Form () CreateObservationWithMeta -> Model -> Html Msg

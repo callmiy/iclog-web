@@ -13,6 +13,7 @@ import Observation.List as ObservationList
 import Observation.Detail.App as ObservationDetail
 import Observation.New.App as ObservationNew
 import Observation.Channel as ObservationChannel exposing (ChannelState)
+import Navigation exposing (Location)
 
 
 type alias Model =
@@ -21,21 +22,20 @@ type alias Model =
     }
 
 
-init : Flag -> ( Model, Cmd Msg )
-init flag =
+init : Flag -> Location -> ( Model, Cmd Msg )
+init flag initialLocation =
     let
+        route =
+            Router.fromLocation initialLocation
+
         store =
             Store.create flag
-
-        ( childModel, cmd ) =
-            store
-                |> ObservationList.queryStore
-                |> ObservationList.init
     in
-        { store = store
-        , pageState = Loaded (Page.ObservationList childModel)
-        }
-            ! [ Cmd.map ObservationListMsg cmd ]
+        setRoute
+            { store = store
+            , pageState = Loaded Page.Blank
+            }
+            route
 
 
 
@@ -49,16 +49,14 @@ type Msg
     | ObservationNewMsg ObservationNew.Msg
     | RouteMsg Route
     | ObservationChannelMsg ChannelState
+    | SetRoute Route
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({ pageState, store } as model) =
     case ( msg, Page.getPage pageState ) of
-        ( ObservationListMsg (ObservationList.RouteMsg route), _ ) ->
-            updateRoute model route
-
-        ( ObservationNewMsg (ObservationNew.RouteMsg route), _ ) ->
-            updateRoute model route
+        ( SetRoute route, _ ) ->
+            setRoute model route
 
         ( ObservationNewMsg subMsg, Page.ObservationNew subModel ) ->
             let
@@ -88,8 +86,8 @@ update msg ({ pageState, store } as model) =
             ( model, Cmd.none )
 
 
-updateRoute : Model -> Route -> ( Model, Cmd Msg )
-updateRoute ({ store } as model) route =
+setRoute : Model -> Route -> ( Model, Cmd Msg )
+setRoute ({ store } as model) route =
     case route of
         Router.NotFound ->
             model ! []

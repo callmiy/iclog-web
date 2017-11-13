@@ -13,7 +13,13 @@ defmodule Iclog.FeatureCase do
 
       def assert_controls_empty(controls) do
         Enum.each controls, fn(control) ->
-          assert attribute_value(control, "value") == ""
+          assert wait_for_condition(
+            true,
+            fn() ->
+              attribute_value(control, "value") == ""
+            end,
+            []
+          )
         end
       end
     end
