@@ -7,6 +7,7 @@ module Observation.Channel
         , searchMetaByTitle
         , PaginatedObservations
         , listObservations
+        , getObservation
         )
 
 import Phoenix.Channel as Channel exposing (Channel)
@@ -36,6 +37,8 @@ type ChannelState
     | SearchMetaByTitleFails Je.Value
     | ListObservationsSucceeds (Result String PaginatedObservations)
     | ListObservationsFails Je.Value
+    | GetObservationSucceeds (Result String Observation)
+    | GetObservationFails Je.Value
 
 
 channel : Channel ChannelState
@@ -110,6 +113,24 @@ searchMetaByTitle title =
             |> Push.withPayload payLoad
             |> Push.onOk (SearchMetaByTitleSucceeds << response)
             |> Push.onError SearchMetaByTitleFails
+
+
+getObservation : String -> Push ChannelState
+getObservation id_ =
+    let
+        ( query, params, response ) =
+            graphQlEndpointHelper observationQueryRequest id_
+
+        payLoad =
+            Je.object
+                [ ( "query", Je.string query )
+                , ( "params", params )
+                ]
+    in
+        Push.init channelName "get_observation"
+            |> Push.withPayload payLoad
+            |> Push.onOk (GetObservationSucceeds << response)
+            |> Push.onError GetObservationFails
 
 
 listObservations : GUtils.PaginationParamsVars -> Push ChannelState
@@ -323,6 +344,39 @@ paginatedObservationsQueryRequest params =
                         paginatedObservationResponse
     in
         Grb.request params queryRoot
+
+
+
+-- OBSERVATION QUERY
+
+
+observationQueryName : String
+observationQueryName =
+    "observation"
+
+
+observationQueryRequest :
+    String
+    -> Request Query Observation
+observationQueryRequest id_ =
+    let
+        idVar =
+            Var.required "id" (always id_) Var.id
+
+        queryRoot : Document Query Observation String
+        queryRoot =
+            Grb.queryDocument <|
+                Grb.extract <|
+                    Grb.field
+                        observationQueryName
+                        [ ( "id", Arg.variable idVar ) ]
+                        observationGraphQlResponse
+    in
+        Grb.request id_ queryRoot
+
+
+
+-----------------------
 
 
 observationGraphQlResponse : ValueSpec Grb.NonNull Grb.ObjectType Observation vars

@@ -8,6 +8,49 @@ defmodule IclogWeb.Schema.ObservationTest do
   alias IclogWeb.Schema
 
   describe "query" do
+    test "observation_query returns ok" do
+      %Observation{
+        id: id_,
+        comment: comment,
+        observation_meta: %ObservationMeta{
+          id: obm_id_,
+          title: title,
+          intro: intro,
+        }
+      } = insert(:observation)
+
+      id = Integer.to_string id_
+      obm_id = Integer.to_string obm_id_
+
+      {query, params} = valid_query(:observation, id)
+
+      assert {:ok, %{
+          data: %{
+            "observation" => %{
+              "id" => ^id,
+              "comment" => ^comment,
+              "insertedAt" => _,
+              "updatedAt" => _,
+              "meta" => %{
+                "id" => ^obm_id,
+                "title" => ^title,
+                "intro" => ^intro,
+              }
+            }
+          }
+        }
+      } = Absinthe.run(query, Schema, variables: params)
+    end
+
+    test "observation_query returns error" do
+      {query, params} = valid_query(:observation, "0")
+
+      assert {:ok, %{
+          errors: [%{message: _}]
+        }
+      } = Absinthe.run(query, Schema, variables: params)
+    end
+
     test "observations_query" do
       %Observation{
         id: id_,

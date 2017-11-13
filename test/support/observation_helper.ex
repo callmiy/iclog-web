@@ -126,6 +126,26 @@ defmodule Iclog.Observable.Observation.TestHelper do
 
     {query, params}
   end
+  def valid_query(:observation, id) do
+    query = """
+      query ($id: ID!) {
+        observation(id: $id) {
+          id
+          comment
+          insertedAt
+          updatedAt
+          meta {
+            id
+            title
+            intro
+          }
+        }
+      }
+    """
+
+    params = %{"id" => id}
+    {query, params}
+  end
 
   def invalid_query(:Observation_mutation_with_meta) do
     query = """

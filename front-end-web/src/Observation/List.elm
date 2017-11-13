@@ -118,7 +118,7 @@ view : Model -> Html Msg
 view { entries, pagination } =
     Html.div
         [ Attr.id "observation-list-view" ]
-        [ Navigation.nav Router.ObservationList
+        [ Navigation.nav <| Just Router.ObservationList
         , viewTable entries
         , viewPagination pagination Paginate
         ]
@@ -149,10 +149,7 @@ viewHeader =
                 []
             , Html.th
                 [ Attr.class "header" ]
-                [ Html.text "Title" ]
-            , Html.th
-                [ Attr.class "header" ]
-                [ Html.text "Comment" ]
+                [ Html.text "Details" ]
             , Html.th
                 [ Attr.class "header" ]
                 [ Html.text "Created On" ]
@@ -165,24 +162,22 @@ viewObservationRow { id, comment, insertedAt, meta } =
     Html.tr
         [ styles [ Css.cursor Css.pointer ] ]
         [ Html.td []
-            [ Html.i
+            [ Html.a
                 [ Attr.class "bpb fa fa-eye"
                 , Attr.attribute "aria-hidden" "true"
-                , styles [ Css.cursor Css.pointer ]
+                , styles [ Css.color Css.inherit ]
                 , Router.href <| Router.ObservationDetail id
                 ]
                 []
             ]
-        , Html.td []
-            [ Html.div
-                []
-                [ Html.text meta.title ]
-            ]
         , Html.td
             []
-            [ Html.div
+            [ Html.h6
                 []
-                [ Html.text comment ]
+                [ Html.text meta.title ]
+            , Html.div
+                []
+                [ Html.text <| String.slice 0 120 comment ]
             ]
         , Html.td
             []

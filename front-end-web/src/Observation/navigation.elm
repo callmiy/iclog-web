@@ -12,30 +12,39 @@ styles =
     Css.asPairs >> Attr.style
 
 
-nav : Route -> Html msg
-nav currentRoute =
-    Html.div
-        [ styles [ Css.height (Css.pct 100) ] ]
-        [ Html.div
-            [ styles
-                [ Css.marginBottom (Css.rem 0.75)
-                , Css.fontSize (Css.rem 1.3)
+nav : Maybe Route -> Html msg
+nav maybeCurrentRoute =
+    let
+        currentRoute route =
+            case maybeCurrentRoute of
+                Nothing ->
+                    False
+
+                Just r ->
+                    r == route
+    in
+        Html.div
+            [ styles [ Css.height (Css.pct 100) ] ]
+            [ Html.div
+                [ styles
+                    [ Css.marginBottom (Css.rem 0.75)
+                    , Css.fontSize (Css.rem 1.3)
+                    ]
+                ]
+                [ changeViewIcon
+                    "new-observable-nav-icon"
+                    "New"
+                    "fa fa-plus-square"
+                    (currentRoute Router.ObservationNew)
+                    Router.ObservationNew
+                , changeViewIcon
+                    "list-observables-nav-icon"
+                    "List"
+                    "fa fa-list"
+                    (currentRoute Router.ObservationList)
+                    Router.ObservationList
                 ]
             ]
-            [ changeViewIcon
-                "new-observable-nav-icon"
-                "New"
-                "fa fa-plus-square"
-                (currentRoute == Router.ObservationNew)
-                Router.ObservationNew
-            , changeViewIcon
-                "list-observables-nav-icon"
-                "List"
-                "fa fa-list"
-                (currentRoute == Router.ObservationList)
-                Router.ObservationList
-            ]
-        ]
 
 
 changeViewIcon :

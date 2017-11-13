@@ -130,4 +130,45 @@ defmodule IclogWeb.ObservationChannelTest do
       )
     end
   end
+
+  describe "get_observation" do
+    test "replies with status ok and observation", %{socket: socket} do
+      obs = insert(:observation)
+      id = Integer.to_string obs.id
+
+      {query, params} = valid_query(:observation, id)
+
+      ref = push socket, "get_observation", %{
+        "query" => query,
+        "params" => params
+      }
+
+      assert_reply(
+        ref,
+        :ok,
+        %{
+          data: %{
+            "observation" => %{
+              "id" => ^id,
+              "meta" => %{
+                "id" => _
+              }
+            }
+          }
+        },
+        1000
+      )
+    end
+
+    test "replies with status error", %{socket: socket} do
+      {query, params} = valid_query(:observation, "0")
+
+      ref = push socket, "get_observation", %{
+        "query" => query,
+        "params" => params
+      }
+
+      assert_reply(ref, :error, %{errors: _ }, 1000)
+    end
+  end
 end

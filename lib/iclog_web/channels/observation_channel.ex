@@ -40,6 +40,14 @@ defmodule IclogWeb.ObservationChannel do
 
     {:reply, absinthe_response(reply), socket}
   end
+  def handle_in(
+      "get_observation",
+      %{"query" => query, "params" => params },
+      socket) do
+    reply = Absinthe.run(query, Schema, variables: params)
+
+    {:reply, absinthe_response(reply), socket}
+  end
 
   defp absinthe_response({:ok, %{errors: error}}) do
     {:error, %{errors: error}}

@@ -69,6 +69,13 @@ defmodule Iclog.Observable.Observation do
 
   """
   def get!(id), do: Repo.get!(Observation, id)
+  def get(id) do
+    Repo.one from observation in Observation,
+      where: observation.id == ^id,
+      join: meta in assoc(observation, :observation_meta),
+      order_by: [desc: observation.inserted_at, desc: observation.id],
+      preload: [observation_meta: meta]
+  end
 
   @doc """
   Creates a observation.

@@ -25,6 +25,20 @@ defmodule IclogWeb.Schema.Observation do
   end
 
   object :observation_query do
+    field :observation, type: :observation do
+      arg :id, non_null(:id)
+
+      resolve fn(%{id: id}, _info) ->
+        case Observation.get(id) do
+          nil  ->
+            {:error, "Observation id #{id} not found"}
+
+          obs ->
+            {meta, obs_} = Map.pop obs, :observation_meta
+            {:ok, Map.put(obs_, :meta, meta)}
+        end
+      end
+    end
     field :observations, list_of(:observation) do
 
       resolve fn(_args, _info) ->

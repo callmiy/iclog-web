@@ -80,7 +80,7 @@ update msg ({ pageState, store } as model) =
                     ! [ Cmd.map ObservationListMsg cmd ]
 
         ( ObservationDetailMsg subMsg, Page.ObservationDetail subModel ) ->
-            model ! []
+            updateObservationDetail subMsg model subModel
 
         _ ->
             ( model, Cmd.none )
@@ -95,7 +95,8 @@ setRoute ({ store } as model) route =
         Router.ObservationDetail id_ ->
             let
                 ( subModel, cmd ) =
-                    ObservationDetail.init id_
+                    ObservationDetail.queryStore store
+                        |> ObservationDetail.init id_
             in
                 { model | pageState = Page.Loaded <| Page.ObservationDetail subModel }
                     ! [ Cmd.map ObservationDetailMsg cmd ]
@@ -134,3 +135,20 @@ updateObservationList subMsg ({ store } as model) subModel =
             | pageState = Page.Loaded <| Page.ObservationList newSubModel
         }
             ! [ Cmd.map ObservationListMsg cmd ]
+
+
+updateObservationDetail :
+    ObservationDetail.Msg
+    -> Model
+    -> ObservationDetail.Model
+    -> ( Model, Cmd Msg )
+updateObservationDetail subMsg ({ store } as model) subModel =
+    let
+        ( newSubModel, cmd ) =
+            ObservationDetail.queryStore store
+                |> ObservationDetail.update subMsg subModel
+    in
+        { model
+            | pageState = Page.Loaded <| Page.ObservationDetail newSubModel
+        }
+            ! [ Cmd.map ObservationDetailMsg cmd ]

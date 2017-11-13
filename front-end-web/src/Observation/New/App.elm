@@ -301,7 +301,7 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
     in
         Html.div
             []
-            [ Navigation.nav Router.ObservationNew
+            [ Navigation.nav <| Just Router.ObservationNew
             , viewNewInfo <| Maybe.andThen (\o -> Just o.id) model.newCreated
             , Html.form
                 [ onSubmit Submit
