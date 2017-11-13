@@ -114,15 +114,15 @@ viewTab ({ meta, comment, insertedAt } as observation) =
             , Html.p
                 [ Attr.class "card-text" ]
                 [ Html.text comment ]
-            , Html.a
+            , Html.i
                 [ Attr.class "card-link fa fa-pencil-square-o"
-                , Attr.href "#"
+                , styles [ Css.cursor Css.pointer ]
                 ]
                 []
             ]
         , Html.div
             [ Attr.class "card-footer text-muted" ]
-            [ Html.text <| DateFormat.format "%a %d/%b/%y" insertedAt ]
+            [ Html.text <| DateFormat.format "%a %d/%b/%y %l:%M %p" insertedAt ]
         ]
 
 
