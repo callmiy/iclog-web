@@ -303,27 +303,31 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
             []
             [ Navigation.nav <| Just Router.ObservationNew
             , viewNewInfo <| Maybe.andThen (\o -> Just o.id) model.newCreated
-            , Html.form
-                [ onSubmit Submit
-                , Attr.novalidate True
-                , Attr.id "new-observable-form"
-                , styles styles_
-                ]
-                [ FormUtils.textualErrorBox serverError
-                , viewMeta form model
-                , Html.fieldset
-                    []
-                    [ FormUtils.formGrp
-                        Input.textArea
-                        commentField
-                        [ Attr.placeholder "Comment"
-                        , Attr.value (Maybe.withDefault "" commentField.value)
-                        , Attr.name "new-observation-comment"
-                        ]
-                        { errorId = "new-observation-comment-error-id", errors = Nothing }
-                        FormMsg
+            , Html.div
+                [ Attr.class "row" ]
+                [ Html.form
+                    [ onSubmit Submit
+                    , Attr.novalidate True
+                    , Attr.id "new-observable-form"
+                    , styles styles_
+                    , Attr.class "col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2"
                     ]
-                , formBtns label_ disableSubmitBtn disableResetBtn
+                    [ FormUtils.textualErrorBox serverError
+                    , viewMeta form model
+                    , Html.fieldset
+                        []
+                        [ FormUtils.formGrp
+                            Input.textArea
+                            commentField
+                            [ Attr.placeholder "Comment"
+                            , Attr.value (Maybe.withDefault "" commentField.value)
+                            , Attr.name "new-observation-comment"
+                            ]
+                            { errorId = "new-observation-comment-error-id", errors = Nothing }
+                            FormMsg
+                        ]
+                    , formBtns label_ disableSubmitBtn disableResetBtn
+                    ]
                 ]
             ]
 
