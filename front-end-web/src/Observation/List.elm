@@ -27,11 +27,8 @@ import Store exposing (Store)
 import Phoenix
 import Router exposing (Route)
 import Observation.Navigation as Navigation
-
-
-styles : List Css.Style -> Attribute msg
-styles =
-    Css.asPairs >> Attr.style
+import SharedStyles exposing (..)
+import AppStyles exposing (appNamespace)
 
 
 type alias Model =
@@ -114,6 +111,19 @@ update msg model { websocketUrl } =
                     model ! []
 
 
+
+-- VIEW
+
+
+styles : List Css.Style -> Attribute msg
+styles =
+    Css.asPairs >> Attr.style
+
+
+{ id, class, classList } =
+    appNamespace
+
+
 view : Model -> Html Msg
 view { entries, pagination } =
     Html.div
@@ -148,8 +158,19 @@ viewHeader =
                 [ Attr.class "header headerSortDown" ]
                 []
             , Html.th
+                [ Attr.class "header"
+                , class [ DisplayNoneMobileTableCell ]
+                ]
+                [ Html.text "Title" ]
+            , Html.th
                 [ Attr.class "header" ]
-                [ Html.text "Details" ]
+                [ Html.span
+                    [ class [ ShowOnlyMobile ] ]
+                    [ Html.text "Details" ]
+                , Html.span
+                    [ class [ ShowNoneMobile ] ]
+                    [ Html.text "Comment" ]
+                ]
             , Html.th
                 [ Attr.class "header" ]
                 [ Html.text "Created On" ]
@@ -160,7 +181,7 @@ viewHeader =
 viewObservationRow : Observation -> Html Msg
 viewObservationRow { id, comment, insertedAt, meta } =
     Html.tr
-        [ styles [ Css.cursor Css.pointer ] ]
+        []
         [ Html.td []
             [ Html.a
                 [ Attr.class "bpb fa fa-eye"
@@ -171,9 +192,12 @@ viewObservationRow { id, comment, insertedAt, meta } =
                 []
             ]
         , Html.td
+            [ class [ DisplayNoneMobileTableCell ] ]
+            [ Html.text meta.title ]
+        , Html.td
             []
             [ Html.h6
-                []
+                [ class [ ShowOnlyMobile ] ]
                 [ Html.text meta.title ]
             , Html.div
                 []

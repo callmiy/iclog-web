@@ -10,7 +10,8 @@
     "repl": "elm-repl",
     "reactor": "elm-reactor",
     "test": "elm-test",
-    "deploy": "node scripts/deploy.js && node scripts/build.js"
+    "deploy": "node scripts/deploy.js && node scripts/build.js",
+    "watch-elm-css": "chokidar \"**/*Styles.elm\" -c \"elm-css src/Stylesheets.elm\""
   },
   "devDependencies": {
     "assets-webpack-plugin": "^3.5.1",
@@ -20,13 +21,14 @@
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.6.0",
     "chalk": "^2.1.0",
+    "chokidar-cli": "^1.2.0",
     "clean-webpack-plugin": "^0.1.16",
     "connect-history-api-fallback": "^1.3.0",
     "css-loader": "^0.28.7",
     "dotenv": "^4.0.0",
     "elm": "^0.18.0",
     "elm-hot-loader": "0.5.4",
-    "elm-test": "^0.18.8",
+    "elm-test": "^0.18.9",
     "elm-webpack-loader": "^4.3.0",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",

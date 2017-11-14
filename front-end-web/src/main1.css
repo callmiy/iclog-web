@@ -8911,3 +8911,11 @@ canvas {
   color: #fff;
   background-color: #4d5364;
   border-color: transparent; }
+
+
+.card {
+  color: rgb(255, 255, 255);
+  background-color: rgb(67, 72, 87);
+  border: 1px solid rgb(119, 119, 119) !important;
+  font-size: 1.1rem;
+}

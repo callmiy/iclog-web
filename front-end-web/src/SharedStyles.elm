@@ -10,3 +10,6 @@ type CssClasses
     | KeySelected
     | MouseSelected
     | AutocompleteList
+    | ShowOnlyMobile
+    | ShowNoneMobile
+    | DisplayNoneMobileTableCell
