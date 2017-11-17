@@ -6,7 +6,7 @@ import './main.css';
 import './style.css';
 import $ from 'jquery';
 import 'bootstrap';
-import '../elm-packages/abadi199/datetimepicker/styles/styles.css';
+import './datetimepicker-styles.css';
 import { Main } from './Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
@@ -30,7 +30,8 @@ const getWebSocketUrl = () => {
 
 const flags = {
   apiUrl,
-  websocketUrl: getWebSocketUrl()
+  websocketUrl: getWebSocketUrl(),
+  timeZoneOffset: (new Date()).getTimezoneOffset()
 };
 
 Main.embed(document.getElementById('root'), flags);

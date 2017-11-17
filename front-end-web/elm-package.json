@@ -8,7 +8,7 @@
     ],
     "exposed-modules": [],
     "dependencies": {
-        "abadi199/datetimepicker": "5.0.0 <= v < 6.0.0",
+        "samba6/datetimepicker": "6.0.0 <= v < 7.0.0",
         "elm-community/json-extra": "2.6.0 <= v < 3.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0",
         "elm-lang/dom": "1.1.1 <= v < 2.0.0",
@@ -23,10 +23,9 @@
         "rtfeldman/elm-css": "11.2.0 <= v < 12.0.0",
         "rtfeldman/elm-css-helpers": "2.1.0 <= v < 3.0.0",
         "saschatimme/elm-phoenix": "0.3.1 <= v < 1.0.0",
-        "thebritican/elm-autocomplete": "4.0.3 <= v < 5.0.0"
-    },
-    "dependency-sources": {
-        "abadi199/datetimepicker": "./elm-packages/abadi199/datetimepicker"
+        "thebritican/elm-autocomplete": "4.0.3 <= v < 5.0.0",
+        "elm-community/elm-test": "4.0.0 <= v < 5.0.0",
+        "rluiten/elm-date-extra": "9.2.1 <= v < 10.0.0"
     },
     "elm-version": "0.18.0 <= v < 0.19.0"
 }
