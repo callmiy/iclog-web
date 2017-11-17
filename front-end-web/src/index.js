@@ -6,6 +6,7 @@ import './main.css';
 import './style.css';
 import $ from 'jquery';
 import 'bootstrap';
+import '../elm-packages/abadi199/datetimepicker/styles/styles.css';
 import { Main } from './Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
@@ -36,6 +37,28 @@ Main.embed(document.getElementById('root'), flags);
 
 $(function applyJquery() {
   $('[data-toggle="tooltip"]').tooltip();
+
+  function autoExpand(d) {
+    const minRows = d.getAttribute('data-min-rows') | 0; // eslint-disable-line no-bitwise
+    let rows;
+    d.rows = minRows; // eslint-disable-line no-param-reassign
+    const minBase = Math.min(48, d.baseScrollHeight);
+    rows = Math.ceil((d.scrollHeight - minBase) / 14);
+    d.rows = minRows + rows; // eslint-disable-line no-param-reassign
+  }
+
+
+  $(document)
+    .on('focus.autoExpand', 'textarea.autoExpand', function autoExpand1() {
+      const savedValue = this.value;
+      this.value = '';
+      this.baseScrollHeight = this.scrollHeight;
+      this.value = savedValue;
+      autoExpand(this);
+    })
+    .on('input.autoExpand', 'textarea.autoExpand', function autoExpand2() {
+      autoExpand(this);
+    });
 });
 
 registerServiceWorker();

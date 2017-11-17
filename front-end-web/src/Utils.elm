@@ -14,6 +14,10 @@ module Utils
         , nonBreakingSpace
         , viewPagination
         , toPaginationParamsVars
+        , nonEmpty
+        , unquoteString
+        , unSubmit
+        , unknownServerError
         )
 
 import Date exposing (Date)
@@ -23,6 +27,7 @@ import Json.Decode as Jd exposing (Decoder)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
+import Form.Validate as Validate exposing (Validation)
 
 
 (=>) : a -> b -> ( a, b )
@@ -159,3 +164,42 @@ viewPagination ({ pageNumber, totalPages } as pagination) nextPageMsg =
                     ++ (toString totalPages)
             ]
         ]
+
+
+nonEmpty : Int -> Validation a String
+nonEmpty minLength =
+    Validate.string
+        |> Validate.andThen Validate.nonEmpty
+        |> Validate.andThen (Validate.minLength minLength)
+
+
+{-| Given a quoted text, strip the quotes from the text.
+
+Example:
+unquoteString ""quoteted text"" == "quoted text"
+
+    unquoteString "unqoted text" == "unquoted"
+
+-}
+unquoteString : String -> String
+unquoteString text =
+    case ( String.startsWith "\"" text, String.endsWith "\"" text ) of
+        ( True, True ) ->
+            text
+                |> String.dropLeft 1
+                |> String.dropRight 1
+
+        _ ->
+            text
+
+
+unSubmit : { r | submitting : Bool } -> { r | submitting : Bool }
+unSubmit updatedModel =
+    { updatedModel | submitting = False }
+
+
+unknownServerError :
+    { r | serverError : Maybe String }
+    -> { r | serverError : Maybe String }
+unknownServerError model =
+    { model | serverError = Just "Something went wrong!" }

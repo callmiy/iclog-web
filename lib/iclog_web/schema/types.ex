@@ -1,9 +1,9 @@
 defmodule IclogWeb.Schema.Types do
   use Absinthe.Schema.Notation
 
-  scalar :timex_datetime, description: "{ISO:Extended:Z}" do
+  scalar :i_s_o_datetime, name: "ISODatime" do
     parse (fn(value) ->
-            case DateTime.from_iso8601(value) do
+            case Timex.parse(value, "{ISO:Extended:Z}") do
               {:ok, val, _} -> {:ok, val}
               {:error, _} -> :error
             end

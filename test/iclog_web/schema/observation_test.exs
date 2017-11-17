@@ -193,5 +193,61 @@ defmodule IclogWeb.Schema.ObservationTest do
       assert {:ok, %{errors: _}} =
         Absinthe.run(query, Schema, variables: params)
     end
+
+    test ":observation_mutation_update succeeds" do
+      %Observation{
+        id: id_,
+        comment: comment_,
+        inserted_at: inserted_at_,
+        observation_meta: %ObservationMeta{id: obm_id_}
+      } = insert(:observation)
+
+      id = Integer.to_string id_
+      obm_id = Integer.to_string obm_id_
+      comment = "#{comment_}-updated"
+
+      inserted_at = inserted_at_
+      |> Timex.shift(minutes: 5)
+      |> Timex.format!("{ISO:Extended:Z}")
+
+      query = valid_query :observation_mutation_update
+
+
+      params = %{
+        "id" => id,
+        "comment" => comment,
+        "insertedAt" => inserted_at,
+      }
+
+      assert {:ok,
+            %{data:
+              %{"observationMutationUpdate" =>
+                %{
+                    "id" =>^id,
+                    "comment" => ^comment,
+                    "insertedAt" => ^inserted_at,
+                    "updatedAt" => _,
+                    "meta" => %{
+                      "id" => ^obm_id
+                    }
+                }
+              }
+            }
+        } =
+      Absinthe.run(query, Schema, variables: params)
+    end
+
+    test ":observation_mutation_update errors" do
+      query = valid_query :observation_mutation_update
+
+      params = %{
+        "id" => "0",
+        "comment" => "",
+        "insertedAt" => "",
+      }
+
+      assert {:ok, %{errors: _}} =
+        Absinthe.run(query, Schema, variables: params)
+    end
   end
 end

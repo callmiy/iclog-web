@@ -12,8 +12,8 @@ defmodule IclogWeb.Schema.ObservationMeta do
     field :intro, :string
     field :title, :string
     field :observations, list_of(:observation)
-    field :inserted_at, :timex_datetime
-    field :updated_at, :timex_datetime
+    field :inserted_at, :i_s_o_datetime
+    field :updated_at, :i_s_o_datetime
   end
 
   object :observation_meta_query do

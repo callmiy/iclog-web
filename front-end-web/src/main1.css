@@ -8919,3 +8919,7 @@ canvas {
   border: 1px solid rgb(119, 119, 119) !important;
   font-size: 1.1rem;
 }
+
+.card .form-control {
+  border: 1px solid rgb(119, 119, 119) !important;
+}

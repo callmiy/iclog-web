@@ -1,7 +1,7 @@
 defmodule Iclog.Observable.Observation do
   use Ecto.Schema
   import Ecto.Changeset
-  import Ecto.Query, warn: false
+  import Ecto.Query, warn: false, except: [update: 2, update: 3]
 
   alias Iclog.Repo
   alias Iclog.Observable.Observation
@@ -19,7 +19,7 @@ defmodule Iclog.Observable.Observation do
   @doc false
   def changeset(%Observation{} = observation, attrs) do
     observation
-    |> cast(attrs, [:observation_meta_id, :comment])
+    |> cast(attrs, [:observation_meta_id, :comment, :inserted_at])
     |> validate_required([:observation_meta_id, :comment])
   end
 
@@ -130,6 +130,13 @@ defmodule Iclog.Observable.Observation do
     observation
     |> changeset(attrs)
     |> Repo.update()
+  end
+  def update(%Observation{} = observation, attrs, :with_meta) do
+    with {:ok, result} <- update(observation, attrs) do
+      result_ = Repo.preload result, :observation_meta
+      meta = result_.observation_meta
+      {:ok, Map.put(result, :meta, meta)}
+    end
   end
 
   @doc """

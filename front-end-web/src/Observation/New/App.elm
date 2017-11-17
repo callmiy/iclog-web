@@ -28,7 +28,7 @@ import SharedStyles exposing (..)
 import Observation.Styles exposing (observationNamespace)
 import Observation.Types exposing (CreateObservationWithMeta)
 import Observation.Utils as LUtils exposing (stringGt)
-import Utils as GUtils exposing ((=>))
+import Utils as GUtils exposing ((=>), nonEmpty)
 import Router exposing (Route)
 import Observation.Navigation as Navigation
 
@@ -115,11 +115,10 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
                                     |> Phoenix.push (Maybe.withDefault "" websocketUrl)
                                     |> Cmd.map ChannelMsg
                         in
-                            ( { newModel
+                            { newModel
                                 | submitting = True
-                              }
-                            , cmd
-                            )
+                            }
+                                => cmd
 
                     ( False, Just { comment }, Just meta ) ->
                         let
@@ -129,11 +128,10 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
                                     |> Phoenix.push (Maybe.withDefault "" websocketUrl)
                                     |> Cmd.map ChannelMsg
                         in
-                            ( { newModel
+                            { newModel
                                 | submitting = True
-                              }
-                            , cmd
-                            )
+                            }
+                                => cmd
 
                     _ ->
                         newModel ! []
@@ -322,6 +320,7 @@ view ({ form, serverError, submitting, metaAutoComp } as model) =
                             [ Attr.placeholder "Comment"
                             , Attr.value (Maybe.withDefault "" commentField.value)
                             , Attr.name "new-observation-comment"
+                            , Attr.class "autoExpand"
                             ]
                             { errorId = "new-observation-comment-error-id", errors = Nothing }
                             FormMsg
@@ -518,13 +517,6 @@ formBtns label_ disableSubmitBtn disableResetBtn =
 
 
 -- FORM VALIDATION
-
-
-nonEmpty : Int -> Validation () String
-nonEmpty minLength =
-    Validate.string
-        |> Validate.andThen Validate.nonEmpty
-        |> Validate.andThen (Validate.minLength minLength)
 
 
 validate : Bool -> Validation () CreateObservationWithMeta

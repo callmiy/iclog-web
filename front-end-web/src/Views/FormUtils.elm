@@ -8,15 +8,18 @@ module Views.FormUtils
         , joinErrors
         , textualErrorBox
         , formControlValidator
+        , formBtns
         )
 
 import Html exposing (..)
 import Html.Attributes as Attr
+import Html.Events exposing (onClick)
 import Form.Input as Input exposing (Input)
 import Form exposing (Form, FieldState)
-import Form.Error exposing (ErrorValue)
+import Form.Error exposing (ErrorValue(CustomError))
 import Set
 import Css
+import Utils exposing (unquoteString)
 
 
 styles : List Css.Style -> Attribute msg
@@ -88,15 +91,24 @@ errorMessage :
     -> Bool
     -> Html msg
 errorMessage errorSetting maybeError isInvalid =
-    case ( maybeError, isInvalid ) of
-        ( Just error, True ) ->
+    let
+        toTextualError error =
             textualError
                 { errorSetting
-                    | errors = Just <| toString error
+                    | errors =
+                        toString error
+                            |> Just
                 }
+    in
+        case ( maybeError, isInvalid ) of
+            ( Just (CustomError e), True ) ->
+                toTextualError e
 
-        _ ->
-            text ""
+            ( Just error, True ) ->
+                toTextualError error
+
+            _ ->
+                text ""
 
 
 formIsEmpty : Form e o -> Bool
@@ -142,7 +154,7 @@ textualError { errors, errorId } =
                     ]
                 , Attr.id errorId
                 ]
-                [ text error ]
+                [ text <| unquoteString error ]
 
 
 joinErrors : String -> Maybe (List String) -> Maybe String
@@ -165,3 +177,41 @@ textualErrorBox maybeMessage =
             div
                 [ Attr.class "ui negative message" ]
                 [ p [] [ text message ] ]
+
+
+formBtns :
+    List (Attribute msg)
+    -> List (Attribute msg)
+    -> String
+    -> msg
+    -> Html msg
+formBtns attributesSubmit attributesReset label_ resetMsg =
+    Html.div
+        [ styles [ Css.displayFlex ] ]
+        [ Html.button
+            ([ styles [ Css.flex (Css.int 1) ]
+             , Attr.class "btn btn-info"
+             , Attr.type_ "submit"
+             ]
+                ++ attributesSubmit
+            )
+            [ Html.span
+                [ Attr.class "fa fa-send"
+                , styles
+                    [ Css.display Css.inline
+                    , Css.marginRight (Css.px 5)
+                    ]
+                ]
+                []
+            , Html.text label_
+            ]
+        , Html.button
+            ([ styles [ Css.marginLeft (Css.rem 4) ]
+             , Attr.class "btn btn-outline-warning"
+             , Attr.type_ "button"
+             , onClick resetMsg
+             ]
+                ++ attributesReset
+            )
+            [ Html.text "Reset" ]
+        ]

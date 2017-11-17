@@ -15,8 +15,8 @@ defmodule IclogWeb.Schema.Observation do
     field :id, :id
     field :comment, :string
     field :meta, :observation_meta
-    field :inserted_at, :timex_datetime
-    field :updated_at, :timex_datetime
+    field :inserted_at, :i_s_o_datetime
+    field :updated_at, :i_s_o_datetime
   end
 
   object :paginated_obervation do
@@ -114,9 +114,31 @@ defmodule IclogWeb.Schema.Observation do
                 {:error,  View.render(ChangesetView, "error.json", changeset: changeset)} # {:ok, %{errors: ....}}
             end
         end
-
       end
+    end
+    @desc "Update an observation"
+    field :observation_mutation_update, type: :observation do
+      arg :id, non_null(:id)
+      arg :comment, :string
+      arg :inserted_at, :string
 
+      resolve fn(args, _) ->
+        {id, params} = Map.pop(args, :id)
+
+        case Observation.get(id) do
+          nil ->
+            message = "Observation does not exist!"
+            {:error, message: message, id: message}
+
+          observation ->
+            with {:ok, data} <- Observation.update(observation, params, :with_meta) do
+              {:ok, data}
+            else
+              {:error, changeset} ->
+                {:error,  View.render(ChangesetView, "error.json", changeset: changeset)}
+            end
+        end
+      end
     end
   end
 

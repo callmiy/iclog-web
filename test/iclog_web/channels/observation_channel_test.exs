@@ -5,6 +5,8 @@ defmodule IclogWeb.ObservationChannelTest do
 
   alias IclogWeb.ObservationChannel
   alias Iclog.Observable.ObservationMeta.TestHelper, as: ObmHelper
+  alias Iclog.Observable.Observation
+  alias Iclog.Observable.ObservationMeta
 
   setup do
     {query, params} = valid_query(:paginated_observations, 1)
@@ -169,6 +171,74 @@ defmodule IclogWeb.ObservationChannelTest do
       }
 
       assert_reply(ref, :error, %{errors: _ }, 1000)
+    end
+  end
+
+  describe "update_observation" do
+    test "replies with status ok and observation", %{socket: socket} do
+      %Observation{
+        id: id_,
+        comment: comment_,
+        inserted_at: inserted_at_,
+        observation_meta: %ObservationMeta{id: obm_id_}
+      } = insert(:observation)
+
+      id = Integer.to_string id_
+      obm_id = Integer.to_string obm_id_
+      comment = "#{comment_}-updated"
+
+      inserted_at = inserted_at_
+      |> Timex.shift(minutes: 5)
+      |> Timex.format!("{ISO:Extended:Z}")
+
+      query = valid_query :observation_mutation_update
+
+
+      params = %{
+        "id" => id,
+        "comment" => comment,
+        "insertedAt" => inserted_at,
+      }
+
+      ref = push socket, "update_observation", %{
+        "query" => query,
+        "params" => params
+      }
+
+      assert_reply(
+        ref,
+        :ok,
+        %{
+          data: %{"observationMutationUpdate" =>
+            %{
+              "id" =>^id,
+              "comment" => ^comment,
+              "insertedAt" => ^inserted_at,
+              "updatedAt" => _,
+              "meta" => %{
+                "id" => ^obm_id
+              }
+            }
+          }
+        }
+      )
+    end
+
+    test "replies with status error", %{socket: socket} do
+      query = valid_query :observation_mutation_update
+
+      params = %{
+        "id" => "0",
+        "comment" => "",
+        "insertedAt" => "",
+      }
+
+      ref = push socket, "get_observation", %{
+        "query" => query,
+        "params" => params
+      }
+
+      assert_reply ref, :error, %{errors: _}
     end
   end
 end

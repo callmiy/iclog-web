@@ -66,6 +66,27 @@ defmodule Iclog.Observable.Observation.TestHelper do
 
     {query, params}
   end
+  def valid_query(:observation_mutation_update) do
+    """
+      mutation ($id: ID!, $comment: String, $insertedAt: String) {
+        observationMutationUpdate(
+          id: $id
+          comment: $comment
+          insertedAt: $insertedAt
+        ) {
+          id
+          comment
+          insertedAt
+          updatedAt
+          meta {
+            id
+            title
+            intro
+          }
+        }
+      }
+    """
+  end
   def valid_query(:Observation_mutation, observation_meta_id) do
     query = """
       mutation createObservation ($comment: String!, $metaId: ID!) {

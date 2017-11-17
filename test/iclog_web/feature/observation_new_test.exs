@@ -1,4 +1,4 @@
-defmodule IclogWeb.Feature.ObservationTest do
+defmodule IclogWeb.Feature.ObservationNewTest do
   use Iclog.FeatureCase
 
   alias Iclog.Observable.Observation
@@ -190,38 +190,13 @@ defmodule IclogWeb.Feature.ObservationTest do
     assert element?(:id, @new_created_alert_id)
   end
 
-  defp control_validate_string_lenght(ops) do
-    control_validate_string_lenght(:no_valid_text, ops)
-
-    # And when user inputs ops.string_len or more characters into ops.field,
-    fill_field(ops.field, ops.valid_text)
-
-    # the error message disappears
-    refute element?(:id, ops.error_id)
-
-    # and control's border color changes to green
-    refute has_class?(ops.field, "is-invalid")
-    assert has_class?(ops.field, "is-valid")
-  end
-  defp control_validate_string_lenght(:no_valid_text, ops) do
-    # When user inputs less than ops.string_len characters into ops.field,
-    # the color of the field's border changes to "#dc3545" (some kind of red)
-    fill_field(ops.field, ops.invalid_text)
-    assert wait_for_condition(true, &has_class?/2, [ops.field, "is-invalid"])
-
-    # And a red colored line of text appears indicating to
-    # user that the input is less than ops.string_len characters
-    error_text = Map.get(ops, :error_text) || error_string(:lt, ops.string_len)
-    assert visible_text({:id, ops.error_id}) == error_text
-  end
-
   defp complete_title_via_auto_complete(control) do
     # Autocomplete menu is not yet revealed
     refute element? :class, "autocompleteAutocompleteItem"
 
     # When a at least 3 characters have been entered into the title field
     fill_field control, ""
-    Enum.each String.graphemes("some"), fn(text) -> send_text text end
+    type_text "som", 2
 
     # Autocomplete menu is revealed
     auto_complete = find_element :class, "autocompleteAutocompleteItem"

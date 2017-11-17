@@ -8,6 +8,7 @@ module Observation.Channel
         , PaginatedObservations
         , listObservations
         , getObservation
+        , updateObservation
         )
 
 import Phoenix.Channel as Channel exposing (Channel)
@@ -39,6 +40,8 @@ type ChannelState
     | ListObservationsFails Je.Value
     | GetObservationSucceeds (Result String Observation)
     | GetObservationFails Je.Value
+    | UpdateObservationSucceeds (Result String Observation)
+    | UpdateObservationFails Je.Value
 
 
 channel : Channel ChannelState
@@ -131,6 +134,24 @@ getObservation id_ =
             |> Push.withPayload payLoad
             |> Push.onOk (GetObservationSucceeds << response)
             |> Push.onError GetObservationFails
+
+
+updateObservation : ObservationUpdateParams -> Push ChannelState
+updateObservation args =
+    let
+        ( query, params, response ) =
+            graphQlEndpointHelper observationUpdateRequest args
+
+        payLoad =
+            Je.object
+                [ ( "query", Je.string query )
+                , ( "params", params )
+                ]
+    in
+        Push.init channelName "update_observation"
+            |> Push.withPayload payLoad
+            |> Push.onOk (UpdateObservationSucceeds << response)
+            |> Push.onError UpdateObservationFails
 
 
 listObservations : GUtils.PaginationParamsVars -> Push ChannelState
@@ -373,6 +394,51 @@ observationQueryRequest id_ =
                         observationGraphQlResponse
     in
         Grb.request id_ queryRoot
+
+
+
+-- OBSERVATION UPDATE
+
+
+type alias ObservationUpdateParams =
+    { id : String
+    , comment : Maybe String
+    , insertedAt : Maybe String
+    }
+
+
+observationUpdateName : String
+observationUpdateName =
+    "observationMutationUpdate"
+
+
+observationUpdateRequest :
+    ObservationUpdateParams
+    -> Request Mutation Observation
+observationUpdateRequest observation =
+    let
+        idVar =
+            Var.required "id" .id Var.id
+
+        commentVar =
+            Var.required "comment" .comment (Var.nullable Var.string)
+
+        insertedAtVar =
+            Var.required "insertedAt" .insertedAt (Var.nullable Var.string)
+
+        queryRoot : Document Mutation Observation ObservationUpdateParams
+        queryRoot =
+            Grb.mutationDocument <|
+                Grb.extract <|
+                    Grb.field
+                        observationUpdateName
+                        [ ( "id", Arg.variable idVar )
+                        , ( "comment", Arg.variable commentVar )
+                        , ( "insertedAt", Arg.variable insertedAtVar )
+                        ]
+                        observationGraphQlResponse
+    in
+        Grb.request observation queryRoot
 
 
 
