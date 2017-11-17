@@ -16,7 +16,7 @@ import Observation.Navigation as Navigation
 import Css
 import Observation.Types exposing (Observation)
 import Observation.Channel as Channel exposing (ChannelState)
-import Store exposing (Store)
+import Store exposing (Store, TimeZoneOffset)
 import Phoenix
 import Date.Format as DateFormat
 import Views.FormUtils as FormUtils
@@ -34,6 +34,7 @@ import DateTimePicker.Config as DateTimePickerConfig
         , defaultDateTimePickerConfig
         , TimePickerConfig
         )
+import Date.Extra.Duration as Duration
 
 
 type alias Model =
@@ -92,12 +93,16 @@ init id_ { websocketUrl } =
 
 
 type alias QueryStore =
-    { websocketUrl : Maybe String }
+    { websocketUrl : Maybe String
+    , tzOffset : TimeZoneOffset
+    }
 
 
 queryStore : Store -> QueryStore
 queryStore store =
-    { websocketUrl = Store.getWebsocketUrl store }
+    { websocketUrl = Store.getWebsocketUrl store
+    , tzOffset = Store.getTimeZoneOffset store
+    }
 
 
 type Msg
@@ -199,7 +204,7 @@ update msg model store =
                                 , id = id
                                 , insertedAt =
                                     Maybe.map
-                                        DateFormat.formatISO8601
+                                        (formatDateISOWithTimeZone store.tzOffset)
                                         model.selectedDate
                                 }
                                     |> Channel.updateObservation
@@ -573,3 +578,9 @@ subscriptions model =
 formatDateForForm : Date -> String
 formatDateForForm date =
     DateFormat.format "%a %d/%b/%y %I:%M %p" date
+
+
+formatDateISOWithTimeZone : TimeZoneOffset -> Date -> String
+formatDateISOWithTimeZone tz date =
+    Duration.add Duration.Minute (Store.toTimeZoneVal tz) date
+        |> DateFormat.formatISO8601

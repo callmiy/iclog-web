@@ -1,6 +1,5 @@
 module Main exposing (..)
 
-import Html
 import Phoenix
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
 import Phoenix.Channel as Channel

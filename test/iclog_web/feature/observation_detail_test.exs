@@ -123,8 +123,8 @@ defmodule IclogWeb.Feature.ObservationDetailTest do
           nil ->
             false
           obs ->
-            {date, _} = timex_ecto_date_to_local_tz obs.inserted_at
-            obs.comment == updated_comment && date.day == inserted_at_updated.day
+            {_, date} = timex_ecto_date_to_local_tz obs.inserted_at
+            obs.comment == updated_comment && date == inserted_at_updated_str
         end
       end
     )
