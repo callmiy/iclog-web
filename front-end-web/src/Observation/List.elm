@@ -2,6 +2,7 @@ module Observation.List
     exposing
         ( Model
         , Msg(..)
+        , ExternalMsg(..)
         , update
         , view
         , init
@@ -10,8 +11,8 @@ module Observation.List
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
-import Observation.Channel as Channel exposing (PaginatedObservations, ChannelState)
-import Observation.Types exposing (Observation)
+import Observation.Channel as Channel exposing (ChannelState)
+import Observation.Types exposing (Observation, PaginatedObservations)
 import Date.Format as DateFormat
 import Css
 import Utils as GUtils
@@ -32,22 +33,12 @@ import AppStyles exposing (appNamespace)
 
 
 type alias Model =
-    PaginatedObservations
+    ()
 
 
-init : QueryStore -> ( Model, Cmd Msg )
-init { websocketUrl } =
-    let
-        cmd =
-            defaultPaginationParamsVar
-                |> Channel.listObservations
-                |> Phoenix.push (Maybe.withDefault "" websocketUrl)
-                |> Cmd.map ChannelMsg
-    in
-        { entries = []
-        , pagination = defaultPagination
-        }
-            ! [ cmd ]
+init : Model
+init =
+    ()
 
 
 type Msg
@@ -57,19 +48,28 @@ type Msg
 
 
 type alias QueryStore =
-    { websocketUrl : Maybe String }
+    { websocketUrl : Maybe String
+    , paginatedObservations : PaginatedObservations
+    }
 
 
 queryStore : Store -> QueryStore
 queryStore store =
-    { websocketUrl = Store.getWebsocketUrl store }
+    { websocketUrl = Store.getWebsocketUrl store
+    , paginatedObservations = Store.getPaginatedObservations store
+    }
 
 
-update : Msg -> Model -> QueryStore -> ( Model, Cmd Msg )
+type ExternalMsg
+    = None
+    | ObservationsReceived PaginatedObservations
+
+
+update : Msg -> Model -> QueryStore -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg model { websocketUrl } =
     case msg of
         NoOp ->
-            model ! []
+            model ! [] => None
 
         Paginate pagination ->
             let
@@ -79,36 +79,24 @@ update msg model { websocketUrl } =
                         |> Phoenix.push (Maybe.withDefault "" websocketUrl)
                         |> Cmd.map ChannelMsg
             in
-                model ! [ cmd ]
+                model ! [ cmd ] => None
 
         ChannelMsg channelState ->
             case channelState of
                 Channel.ListObservationsSucceeds result ->
                     case result of
                         Ok data ->
-                            data ! []
+                            () ! [] => ObservationsReceived data
 
                         Err err ->
                             let
                                 x =
                                     Debug.log "\n\n Channel.ListObservationsSucceeds err ->" err
                             in
-                                model ! []
-
-                Channel.Joined response ->
-                    case response of
-                        Ok data ->
-                            data ! []
-
-                        Err err ->
-                            let
-                                x =
-                                    Debug.log "\n\nObservationChannel.Joined error " err
-                            in
-                                model ! []
+                                model ! [] => None
 
                 _ ->
-                    model ! []
+                    model ! [] => None
 
 
 
@@ -124,14 +112,18 @@ styles =
     appNamespace
 
 
-view : Model -> Html Msg
-view { entries, pagination } =
-    Html.div
-        [ Attr.id "observation-list-view" ]
-        [ Navigation.nav <| Just Router.ObservationList
-        , viewTable entries
-        , viewPagination pagination Paginate
-        ]
+view : Model -> QueryStore -> Html Msg
+view model { paginatedObservations } =
+    let
+        { entries, pagination } =
+            paginatedObservations
+    in
+        Html.div
+            [ Attr.id "observation-list-view" ]
+            [ Navigation.nav <| Just Router.ObservationList
+            , viewTable entries
+            , viewPagination pagination Paginate
+            ]
 
 
 viewTable : List Observation -> Html Msg
@@ -184,7 +176,8 @@ viewObservationRow { id, comment, insertedAt, meta } =
         []
         [ Html.td []
             [ Html.a
-                [ Attr.class "bpb fa fa-eye"
+                [ Attr.class
+                    "bpb fa fa-eye observation-list-to-observation-detail-link"
                 , Attr.attribute "aria-hidden" "true"
                 , styles [ Css.color Css.inherit ]
                 , Router.href <| Router.ObservationDetail id

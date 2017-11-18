@@ -44,7 +44,7 @@ view ({ pageState } as model) =
 
 
 viewPage : Page -> Model -> Html Msg
-viewPage page model =
+viewPage page ({ store } as model) =
     case page of
         Page.Blank ->
             Html.text ""
@@ -53,7 +53,8 @@ viewPage page model =
             Html.map Model.ObservationNewMsg <| ObservationNew.view subModel
 
         Page.ObservationList subModel ->
-            Html.map Model.ObservationListMsg <| ObservationList.view subModel
+            Html.map Model.ObservationListMsg <|
+                ObservationList.view subModel (ObservationList.queryStore store)
 
         Page.ObservationDetail subModel ->
             Html.map Model.ObservationDetailMsg <|

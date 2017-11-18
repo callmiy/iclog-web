@@ -143,7 +143,9 @@ viewPagination ({ pageNumber, totalPages } as pagination) nextPageMsg =
                 [ Attr.type_ "button"
                 , Attr.class "btn btn-outline-secondary"
                 , Attr.disabled <| pageNumber < 2
-                , onClick <| nextPageMsg { pagination | pageNumber = pageNumber - 1 }
+                , onClick <|
+                    nextPageMsg { pagination | pageNumber = pageNumber - 1 }
+                , Attr.id "pagination-previous-page-arrow"
                 ]
                 [ Html.text "<" ]
             , Html.button
@@ -152,6 +154,7 @@ viewPagination ({ pageNumber, totalPages } as pagination) nextPageMsg =
                 , Attr.disabled <| pageNumber == totalPages
                 , onClick <|
                     nextPageMsg { pagination | pageNumber = pageNumber + 1 }
+                , Attr.id "pagination-next-page-arrow"
                 ]
                 [ Html.text ">" ]
             ]

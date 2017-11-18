@@ -7,7 +7,12 @@ module Store
         , create
         , getTimeZoneOffset
         , toTimeZoneVal
+        , getPaginatedObservations
+        , updatePaginatedObservations
         )
+
+import Observation.Types exposing (PaginatedObservations)
+import Utils exposing (defaultPagination)
 
 
 type alias Flag =
@@ -26,6 +31,7 @@ type Store
         { apiUrl : Maybe String
         , websocketUrl : Maybe String
         , timeZoneOffset : TimeZoneOffset
+        , paginatedObservations : PaginatedObservations
         }
 
 
@@ -35,6 +41,10 @@ create { apiUrl, websocketUrl, timeZoneOffset } =
         { apiUrl = apiUrl
         , websocketUrl = websocketUrl
         , timeZoneOffset = TimeZoneOffset timeZoneOffset
+        , paginatedObservations =
+            { entries = []
+            , pagination = defaultPagination
+            }
         }
 
 
@@ -51,3 +61,13 @@ getTimeZoneOffset (Store { timeZoneOffset }) =
 toTimeZoneVal : TimeZoneOffset -> Int
 toTimeZoneVal (TimeZoneOffset val) =
     val
+
+
+getPaginatedObservations : Store -> PaginatedObservations
+getPaginatedObservations (Store { paginatedObservations }) =
+    paginatedObservations
+
+
+updatePaginatedObservations : PaginatedObservations -> Store -> Store
+updatePaginatedObservations pobs (Store store) =
+    Store { store | paginatedObservations = pobs }

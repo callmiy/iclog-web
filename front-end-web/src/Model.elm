@@ -70,17 +70,49 @@ update msg ({ pageState, store } as model) =
 
         ( ObservationListMsg subMsg, Page.ObservationList subModel ) ->
             let
-                ( newSubModel, cmd ) =
+                ( ( newSubModel, cmd_ ), externalMsg ) =
                     ObservationList.queryStore store
                         |> ObservationList.update subMsg subModel
+
+                cmd =
+                    Cmd.map ObservationListMsg cmd_
             in
-                { model
-                    | pageState = Page.Loaded <| Page.ObservationList newSubModel
-                }
-                    ! [ Cmd.map ObservationListMsg cmd ]
+                case externalMsg of
+                    ObservationList.ObservationsReceived observations ->
+                        { model
+                            | pageState =
+                                Page.Loaded <|
+                                    Page.ObservationList newSubModel
+                            , store =
+                                Store.updatePaginatedObservations observations
+                                    store
+                        }
+                            ! [ cmd ]
+
+                    ObservationList.None ->
+                        model ! [ cmd ]
 
         ( ObservationDetailMsg subMsg, Page.ObservationDetail subModel ) ->
             updateObservationDetail subMsg model subModel
+
+        ( ObservationChannelMsg (ObservationChannel.Joined result), _ ) ->
+            case result of
+                Ok observations ->
+                    { model
+                        | store =
+                            Store.updatePaginatedObservations observations
+                                store
+                    }
+                        ! []
+
+                Err err ->
+                    let
+                        x =
+                            Debug.log
+                                "\n\n ObservationChannelMsg (ObservationChannel.Joined result) error->"
+                                err
+                    in
+                        model ! []
 
         _ ->
             ( model, Cmd.none )
@@ -110,14 +142,10 @@ setRoute ({ store } as model) route =
                     ! []
 
         Router.ObservationList ->
-            let
-                ( subModel, cmd ) =
-                    store
-                        |> ObservationList.queryStore
-                        |> ObservationList.init
-            in
-                { model | pageState = Page.Loaded <| Page.ObservationList subModel }
-                    ! [ Cmd.map ObservationListMsg cmd ]
+            { model
+                | pageState = Page.Loaded <| Page.ObservationList ObservationList.init
+            }
+                ! []
 
 
 updateObservationList :
@@ -127,7 +155,7 @@ updateObservationList :
     -> ( Model, Cmd Msg )
 updateObservationList subMsg ({ store } as model) subModel =
     let
-        ( newSubModel, cmd ) =
+        ( ( newSubModel, cmd ), externalMsg ) =
             ObservationList.queryStore store
                 |> ObservationList.update subMsg subModel
     in

@@ -4,12 +4,14 @@ module Observation.Types
         , Meta
         , CreateMeta
         , CreateObservationWithMeta
+        , PaginatedObservations
         , emptyString
         , emptyMeta
         , emptyCreateMeta
         )
 
 import Date exposing (Date)
+import Utils exposing (Pagination)
 
 
 type alias Observation =
@@ -17,6 +19,12 @@ type alias Observation =
     , comment : String
     , meta : Meta
     , insertedAt : Date
+    }
+
+
+type alias PaginatedObservations =
+    { entries : List Observation
+    , pagination : Pagination
     }
 
 

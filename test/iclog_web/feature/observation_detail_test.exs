@@ -14,8 +14,6 @@ defmodule IclogWeb.Feature.ObservationDetailTest do
   @show_edit_icon_id "detail-observation-show-edit-display"
   @show_detail_icon_id "detail-observation-show-detail-display"
 
-  @datetime_format_str "{WDshort} {0D}/{Mshort}/{YY} {0h12}:{m} {AM}"
-
   @tag :integration
   # @tag :no_headless
   test "Edit observation", _meta do
@@ -94,7 +92,7 @@ defmodule IclogWeb.Feature.ObservationDetailTest do
 
     # inserted at textbox contains selected date
     inserted_at_updated_str = inserted_at_updated
-    |> Timex.format!(@datetime_format_str)
+    |> Timex.format!(datetime_format_str())
 
     assert attribute_value(inserted_at_control, "value") == inserted_at_updated_str
 
@@ -137,16 +135,6 @@ defmodule IclogWeb.Feature.ObservationDetailTest do
 
     # show edit icon becomes visible
     assert element?(:id, @show_edit_icon_id)
-  end
-
-  defp timex_ecto_date_to_local_tz(date) do
-    date_ = date
-    |> Timex.to_datetime("Etc/UTC")  #This is the only way I have found to force Timex to respect local timezone
-    |> Timex.to_datetime(Timex.Timezone.local())
-
-    date_str = date_
-    |> Timex.format!(@datetime_format_str)
-    {date_, date_str}
   end
 
   defp select_date(day, unfocus_element) do

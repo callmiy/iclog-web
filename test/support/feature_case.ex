@@ -121,4 +121,18 @@ defmodule Iclog.FeatureCase do
       wait_for_condition(:loop, condition, fun, args, timeout, stop)
     end
   end
+
+  def timex_ecto_date_to_local_tz(date) do
+    date_ = date
+    |> Timex.to_datetime("Etc/UTC")  #This is the only way I have found to force Timex to respect local timezone
+    |> Timex.to_datetime(Timex.Timezone.local())
+
+    date_str = date_
+    |> Timex.format!(datetime_format_str)
+    {date_, date_str}
+  end
+
+  def datetime_format_str do
+    "{WDshort} {0D}/{Mshort}/{YY} {0h12}:{m} {AM}"
+  end
 end

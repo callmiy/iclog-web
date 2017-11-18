@@ -5,7 +5,6 @@ module Observation.Channel
         , createNew
         , channel
         , searchMetaByTitle
-        , PaginatedObservations
         , listObservations
         , getObservation
         , updateObservation
@@ -14,7 +13,15 @@ module Observation.Channel
 import Phoenix.Channel as Channel exposing (Channel)
 import Phoenix.Push as Push exposing (Push)
 import Json.Encode as Je
-import Observation.Types exposing (Observation, Meta, CreateMeta, CreateObservationWithMeta, emptyCreateMeta)
+import Observation.Types
+    exposing
+        ( Observation
+        , Meta
+        , CreateMeta
+        , CreateObservationWithMeta
+        , emptyCreateMeta
+        , PaginatedObservations
+        )
 import Json.Decode as Jd exposing (Decoder)
 import GraphQL.Request.Builder as Grb exposing (Document, Mutation, ValueSpec, Request, Query)
 import GraphQL.Request.Builder.Arg as Arg
@@ -332,12 +339,6 @@ metaByTitleQueryRequest params =
 paginatedObservationsQueryName : String
 paginatedObservationsQueryName =
     "paginatedObservations"
-
-
-type alias PaginatedObservations =
-    { entries : List Observation
-    , pagination : GUtils.Pagination
-    }
 
 
 paginatedObservationResponse : ValueSpec Grb.NonNull Grb.ObjectType PaginatedObservations vars
