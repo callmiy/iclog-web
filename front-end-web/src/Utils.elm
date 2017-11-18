@@ -18,6 +18,7 @@ module Utils
         , unquoteString
         , unSubmit
         , unknownServerError
+        , updatePaginationEntriesBy
         )
 
 import Date exposing (Date)
@@ -59,6 +60,21 @@ defaultPagination =
     , totalPages = 0
     , totalEntries = 0
     }
+
+
+updatePaginationEntriesBy : Int -> Pagination -> Pagination
+updatePaginationEntriesBy howMany ({ pageSize, totalEntries } as pagination) =
+    let
+        totalEntries_ =
+            totalEntries + howMany
+
+        totalPages =
+            ceiling (toFloat totalEntries_ / toFloat pageSize)
+    in
+        { pagination
+            | totalEntries = totalEntries_
+            , totalPages = totalPages
+        }
 
 
 paginationGraphQlResponse : ValueSpec Grb.NonNull Grb.ObjectType Pagination vars

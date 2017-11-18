@@ -11,12 +11,14 @@ defmodule IclogWeb.Feature.ObservationListTest do
   @tag :integration
   # @tag :no_headless
   test "List observations", _meta do
-    [%Observation{
+    %Observation{
       id: id_first,
       comment: comment_first,
       inserted_at: inserted_at_first_,
       observation_meta: %ObservationMeta{title: title_first}
-    } | obs] = insert_list(11, :observation)
+    } = insert(:observation, comment: "The very first observation of all")
+
+    obs = insert_list(10, :observation)
 
     %Observation{
       id: id_last,
@@ -77,8 +79,8 @@ defmodule IclogWeb.Feature.ObservationListTest do
     refute element_enabled?(previous_page_arrow)
 
     # when next pagination arrow is clicked
-    next_page_arrow = find_element :id, "pagination-next-page-arrow"
-    click next_page_arrow
+    _next_page_arrow = find_element :id, "pagination-next-page-arrow"
+    # click next_page_arrow
 
   end
 end

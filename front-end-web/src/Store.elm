@@ -9,10 +9,12 @@ module Store
         , toTimeZoneVal
         , getPaginatedObservations
         , updatePaginatedObservations
+        , addObservation
+        , updateObservation
         )
 
-import Observation.Types exposing (PaginatedObservations)
-import Utils exposing (defaultPagination)
+import Observation.Types exposing (PaginatedObservations, Observation)
+import Utils exposing (defaultPagination, updatePaginationEntriesBy)
 
 
 type alias Flag =
@@ -71,3 +73,34 @@ getPaginatedObservations (Store { paginatedObservations }) =
 updatePaginatedObservations : PaginatedObservations -> Store -> Store
 updatePaginatedObservations pobs (Store store) =
     Store { store | paginatedObservations = pobs }
+
+
+addObservation : Observation -> Store -> Store
+addObservation obs store =
+    let
+        { entries, pagination } =
+            getPaginatedObservations store
+
+        posb =
+            { entries = obs :: entries |> List.take pagination.pageSize
+            , pagination = updatePaginationEntriesBy 1 pagination
+            }
+    in
+        updatePaginatedObservations posb store
+
+
+updateObservation : Observation -> Store -> Store
+updateObservation ({ id } as obs) store =
+    let
+        { entries, pagination } =
+            getPaginatedObservations store
+
+        otherObs =
+            List.filter (\o -> o.id /= id) entries
+
+        posb =
+            { entries = obs :: otherObs
+            , pagination = pagination
+            }
+    in
+        updatePaginatedObservations posb store

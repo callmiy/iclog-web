@@ -2,6 +2,7 @@ module Observation.Detail.App
     exposing
         ( Model
         , Msg(..)
+        , ExternalMsg(..)
         , init
         , update
         , view
@@ -116,11 +117,16 @@ type Msg
     | DismissEditSuccessInfo
 
 
-update : Msg -> Model -> QueryStore -> ( Model, Cmd Msg )
+type ExternalMsg
+    = None
+    | ObservationUpdated Observation
+
+
+update : Msg -> Model -> QueryStore -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg model store =
     case msg of
         NoOp ->
-            ( model, Cmd.none )
+            ( model, Cmd.none ) => None
 
         ChannelMsg channelState ->
             case channelState of
@@ -129,6 +135,7 @@ update msg model store =
                         Ok observation_ ->
                             observationReceived observation_ model
                                 ! []
+                                => None
 
                         Err err ->
                             let
@@ -137,7 +144,7 @@ update msg model store =
                                         "\n\n Channel.GetObservationSucceeds err ->"
                                         err
                             in
-                                model ! []
+                                model ! [] => None
 
                 Channel.UpdateObservationSucceeds result ->
                     case result of
@@ -148,6 +155,7 @@ update msg model store =
                                 |> editSuccess
                             )
                                 ! []
+                                => ObservationUpdated observation_
 
                         Err err ->
                             let
@@ -160,13 +168,15 @@ update msg model store =
                                     |> GUtils.unknownServerError
                                 )
                                     ! []
+                                    => None
 
                 _ ->
-                    model ! []
+                    model ! [] => None
 
         ChangeView viewing ->
             changeView viewing model
                 ! []
+                => None
 
         FormMsg formMsg ->
             { model
@@ -175,6 +185,7 @@ update msg model store =
                 , serverError = Nothing
             }
                 => Cmd.none
+                => None
 
         DatePickerChanged datePickerState maybeDate ->
             { model
@@ -182,9 +193,10 @@ update msg model store =
                 , selectedDate = maybeDate
             }
                 ! []
+                => None
 
         ResetForm ->
-            resetForm model ! []
+            resetForm model ! [] => None
 
         SubmitForm { id } ->
             let
@@ -218,13 +230,14 @@ update msg model store =
                             { model_
                                 | submitting = True
                             }
-                                ! [ cmd ]
+                                => cmd
+                                => None
 
                     _ ->
-                        model_ ! []
+                        model_ ! [] => None
 
         DismissEditSuccessInfo ->
-            { model | editSuccess = False } ! []
+            { model | editSuccess = False } ! [] => None
 
 
 resetForm : Model -> Model

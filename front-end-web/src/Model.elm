@@ -14,6 +14,7 @@ import Observation.Detail.App as ObservationDetail
 import Observation.New.App as ObservationNew
 import Observation.Channel as ObservationChannel exposing (ChannelState)
 import Navigation exposing (Location)
+import Utils exposing ((=>))
 
 
 type alias Model =
@@ -60,13 +61,33 @@ update msg ({ pageState, store } as model) =
 
         ( ObservationNewMsg subMsg, Page.ObservationNew subModel ) ->
             let
-                ( newModel, cmd ) =
+                ( ( newModel, cmd_ ), externalMsg ) =
                     store
                         |> ObservationNew.queryStore
                         |> ObservationNew.update subMsg subModel
+
+                model_ =
+                    { model
+                        | pageState =
+                            Page.Loaded <|
+                                Page.ObservationNew newModel
+                    }
+
+                cmd =
+                    Cmd.map ObservationNewMsg cmd_
             in
-                { model | pageState = Page.Loaded <| Page.ObservationNew newModel }
-                    ! [ Cmd.map ObservationNewMsg cmd ]
+                case externalMsg of
+                    ObservationNew.None ->
+                        model_ => cmd
+
+                    ObservationNew.ObservationCreated observation ->
+                        { model_
+                            | store =
+                                Store.addObservation
+                                    observation
+                                    store
+                        }
+                            ! [ cmd ]
 
         ( ObservationListMsg subMsg, Page.ObservationList subModel ) ->
             let
@@ -84,7 +105,8 @@ update msg ({ pageState, store } as model) =
                                 Page.Loaded <|
                                     Page.ObservationList newSubModel
                             , store =
-                                Store.updatePaginatedObservations observations
+                                Store.updatePaginatedObservations
+                                    observations
                                     store
                         }
                             ! [ cmd ]
@@ -172,11 +194,27 @@ updateObservationDetail :
     -> ( Model, Cmd Msg )
 updateObservationDetail subMsg ({ store } as model) subModel =
     let
-        ( newSubModel, cmd ) =
+        ( ( newSubModel, cmd_ ), externalMsg ) =
             ObservationDetail.queryStore store
                 |> ObservationDetail.update subMsg subModel
+
+        cmd =
+            Cmd.map ObservationDetailMsg cmd_
+
+        model_ =
+            { model
+                | pageState = Page.Loaded <| Page.ObservationDetail newSubModel
+            }
     in
-        { model
-            | pageState = Page.Loaded <| Page.ObservationDetail newSubModel
-        }
-            ! [ Cmd.map ObservationDetailMsg cmd ]
+        case externalMsg of
+            ObservationDetail.None ->
+                model_ ! [ cmd ]
+
+            ObservationDetail.ObservationUpdated observation ->
+                { model_
+                    | store =
+                        Store.updateObservation
+                            observation
+                            store
+                }
+                    ! [ cmd ]

@@ -2,6 +2,7 @@ module Observation.New.App
     exposing
         ( Model
         , Msg(..)
+        , ExternalMsg(..)
         , init
         , update
         , queryStore
@@ -90,11 +91,16 @@ queryStore store =
     { websocketUrl = Store.getWebsocketUrl store }
 
 
-update : Msg -> Model -> QueryStore -> ( Model, Cmd Msg )
+type ExternalMsg
+    = None
+    | ObservationCreated Observation
+
+
+update : Msg -> Model -> QueryStore -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl } as store) =
     case msg of
         NoOp ->
-            ( model, Cmd.none )
+            ( model, Cmd.none ) => None
 
         Submit ->
             let
@@ -119,6 +125,7 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
                                 | submitting = True
                             }
                                 => cmd
+                                => None
 
                     ( False, Just { comment }, Just meta ) ->
                         let
@@ -132,12 +139,17 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
                                 | submitting = True
                             }
                                 => cmd
+                                => None
 
                     _ ->
-                        newModel ! []
+                        newModel ! [] => None
 
         Reset ->
-            model |> reset |> resetNew => Cmd.none
+            model
+                |> reset
+                |> resetNew
+                => Cmd.none
+                => None
 
         FormMsg formMsg ->
             { model
@@ -147,11 +159,13 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
             }
                 |> resetNew
                 => Cmd.none
+                => None
 
         ToggleViewNewMeta ->
             { model | showingNewMetaForm = not model.showingNewMetaForm }
                 |> resetNew
                 => Cmd.none
+                => None
 
         ChannelMsg channelState ->
             let
@@ -173,29 +187,30 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
                                     |> reset
                                     |> updateNew data
                                     => Cmd.none
+                                    => ObservationCreated data
 
                             Err err ->
                                 let
                                     x =
                                         Debug.log "NewWithMetaSucceeds decode error" err
                                 in
-                                    unknownServerError ! []
+                                    unknownServerError ! [] => None
 
                     Channel.CreateObservationFails val ->
                         let
                             x =
                                 Debug.log "NewWithMetaFails" val
                         in
-                            unknownServerError ! []
+                            unknownServerError ! [] => None
 
                     _ ->
-                        ( model, Cmd.none )
+                        ( model, Cmd.none ) => None
 
         MetaAutocompleteMsg subMsg ->
             case ( subMsg, metaAutoComp.editingAutocomp ) of
                 ( MetaAutocomplete.SetAutoState _, False ) ->
                     --This will make sure we only trigger autocomplete when typing in the autocomplete input
-                    model ! []
+                    model ! [] => None
 
                 _ ->
                     let
@@ -213,7 +228,7 @@ update msg ({ form, showingNewMetaForm, metaAutoComp } as model) ({ websocketUrl
                                     }
                             }
                     in
-                        resetNew newModel ! [ cmd ]
+                        resetNew newModel ! [ cmd ] => None
 
 
 reset : Model -> Model
