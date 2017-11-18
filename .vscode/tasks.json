@@ -1,0 +1,105 @@
+{
+  "version": "2.0.0",
+  "presentation": {
+    "reveal": "always",
+    "panel": "new"
+  },
+  "tasks": [
+    {
+      "label": "build front end test",
+      "type": "shell",
+      "command": "yarn build && node scripts/copy-backend.js",
+      "options": {
+        "env": {
+          "ELM_APP_API_URL": "http://localhost:4014/api"
+        }
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "build front end dev",
+      "type": "shell",
+      "command": "yarn build && node scripts/copy-backend.js",
+      "options": {
+        "env": {
+          "ELM_APP_API_URL": "http://localhost:4013/api"
+        }
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "deploy front end prod",
+      "type": "shell",
+      "command": "yarn deploy",
+      "options": {},
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "start front end",
+      "type": "shell",
+      "command": "yarn start",
+      "options": {
+        "env": {
+          "PORT": "3013"
+        }
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "start front and back end",
+      "type": "shell",
+      "command": "cd ..\\api && iex --werl -S mix phx.server && cd ${workspaceFolder} && yarn start",
+      "options": {
+        "env": {
+          "ICLOG_PHOENIX_PORT": "4013",
+          "PORT": "3013"
+        }
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "elm github install",
+      "type": "shell",
+      "command": "elm-github-install",
+      "options": {},
+      "problemMatcher": []
+    },
+    {
+      "label": "elm css compile",
+      "type": "shell",
+      "command": "elm-css src/Stylesheets.elm",
+      "options": {},
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "watch compile elm css",
+      "type": "shell",
+      "command": "yarn watch-elm-css",
+      "options": {},
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Elm test file",
+      "type": "shell",
+      "command": "elm-test tests/${fileBasename}",
+      "options": {},
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Elm test",
+      "type": "shell",
+      "command": "elm-test",
+      "options": {},
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

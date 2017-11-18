@@ -10,7 +10,7 @@
     "repl": "elm-repl",
     "reactor": "elm-reactor",
     "test": "elm-test",
-    "deploy": "node scripts/deploy.js && node scripts/build.js",
+    "deploy": "endud72v.bat && node scripts/deploy.js && node scripts/build.js && node scripts/copy-backend.js",
     "watch-elm-css": "chokidar \"**/*Styles.elm\" -c \"elm-css src/Stylesheets.elm\""
   },
   "devDependencies": {
@@ -48,6 +48,7 @@
   "dependencies": {
     "babel-eslint": "^8.0.1",
     "bootstrap": "4.0.0-beta.2",
+    "copy-dir": "^0.3.0",
     "eslint": "^4.10.0",
     "eslint-config-airbnb-base": "^12.1.0",
     "font-awesome": "^4.7.0",
