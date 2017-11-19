@@ -197,7 +197,7 @@ listObservationsChannelParams vars =
 
 createWithMetaMutationName : String
 createWithMetaMutationName =
-    "observationMutationWithMeta"
+    "observationWithMeta"
 
 
 createWithMetaRequest : CreateObservationWithMeta -> Request Mutation Observation
@@ -271,7 +271,7 @@ type alias CreateQueryVars =
 
 createMutationName : String
 createMutationName =
-    "observationMutation"
+    "observation"
 
 
 createRequest : CreateQueryVars -> Request Mutation Observation
@@ -410,7 +410,7 @@ type alias ObservationUpdateParams =
 
 observationUpdateName : String
 observationUpdateName =
-    "observationMutationUpdate"
+    "observationUpdate"
 
 
 observationUpdateRequest :
