@@ -1,43 +1,35 @@
-module Observation.List
+module Meal.List
     exposing
         ( Model
-        , Msg(..)
+        , Msg
         , ExternalMsg(..)
         , update
         , view
+        , subscriptions
         , init
         , queryStore
         )
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
-import Observation.Channel as Channel exposing (ChannelState)
-import Observation.Types exposing (Observation, PaginatedObservations)
-import Date.Format as DateFormat
+import Views.Nav exposing (nav)
 import Css
-import Utils as GUtils
+import Router
+import Store exposing (Store)
+import Meal.Channel as Channel exposing (ChannelState)
+import Meal.Types exposing (Meal, PaginatedMeals, fromMealId, MealListOnly)
+import Utils
     exposing
         ( Pagination
-        , (=>)
         , toPaginationParamsVars
-        , defaultPaginationParamsVar
-        , defaultPagination
+        , (=>)
         )
-import Store exposing (Store)
+import Date.Format as DateFormat
 import Phoenix
-import Router exposing (Route)
-import Observation.Navigation as Navigation
-import SharedStyles exposing (..)
-import AppStyles exposing (appNamespace)
 import Views.Pagination exposing (viewPagination)
 
 
 type alias Model =
-    ()
-
-
-init : Model
-init =
     ()
 
 
@@ -49,49 +41,54 @@ type Msg
 
 type alias QueryStore =
     { websocketUrl : Maybe String
-    , paginatedObservations : PaginatedObservations
+    , paginatedMeals : PaginatedMeals
     }
 
 
 queryStore : Store -> QueryStore
 queryStore store =
     { websocketUrl = Store.getWebsocketUrl store
-    , paginatedObservations = Store.getPaginatedObservations store
+    , paginatedMeals = Store.getPaginatedMeals store
     }
 
 
 type ExternalMsg
     = None
-    | ObservationsReceived PaginatedObservations
+    | MealsReceived PaginatedMeals
 
 
 update : Msg -> Model -> QueryStore -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg model { websocketUrl } =
     case msg of
         NoOp ->
-            model ! [] => None
+            ( model, Cmd.none ) => None
 
         Paginate pagination ->
             let
                 cmd =
                     toPaginationParamsVars pagination
-                        |> Channel.listObservations
-                        |> Phoenix.push (Maybe.withDefault "" websocketUrl)
+                        |> Channel.list
+                        |> Phoenix.push
+                            (Maybe.withDefault "" websocketUrl)
                         |> Cmd.map ChannelMsg
             in
                 model ! [ cmd ] => None
 
         ChannelMsg channelState ->
             case channelState of
-                Channel.ListObservationsSucceeds result ->
+                Channel.ListSucceeds result ->
                     case result of
                         Ok data ->
-                            () ! [] => ObservationsReceived data
+                            () ! [] => MealsReceived data
 
                         Err err ->
                             let
+                                message =
+                                    "\n\n error decoding response from ->"
+                                        ++ toString msg
+
                                 x =
-                                    Debug.log "\n\n Channel.ListObservationsSucceeds err ->" err
+                                    Debug.log message err
                             in
                                 model ! [] => None
 
@@ -108,26 +105,26 @@ styles =
     Css.asPairs >> Attr.style
 
 
-{ id, class, classList } =
-    appNamespace
-
-
 view : Model -> QueryStore -> Html Msg
-view model { paginatedObservations } =
+view model { paginatedMeals } =
     let
         { entries, pagination } =
-            paginatedObservations
+            paginatedMeals
     in
         Html.div
-            [ Attr.id "observation-list-view" ]
-            [ Navigation.nav <| Just Router.ObservationList
+            [ Attr.id "meal-list-view" ]
+            [ nav
+                (Just Router.MealList)
+                Router.MealList
+                Router.MealNew
+                "meal"
             , viewTable entries
             , viewPagination pagination Paginate
             ]
 
 
-viewTable : List Observation -> Html Msg
-viewTable observations =
+viewTable : List MealListOnly -> Html Msg
+viewTable meals =
     Html.div
         [ Attr.class "iw" ]
         [ Html.table
@@ -135,7 +132,7 @@ viewTable observations =
             [ viewHeader
             , Html.tbody
                 []
-                (List.map viewObservationRow observations)
+                (List.map viewMealRow meals)
             ]
         ]
 
@@ -150,62 +147,56 @@ viewHeader =
                 [ Attr.class "header headerSortDown" ]
                 []
             , Html.th
-                [ Attr.class "header"
-                , class [ DisplayNoneMobileTableCell ]
-                ]
-                [ Html.text "Title" ]
+                [ Attr.class "header" ]
+                [ Html.text "Meal" ]
             , Html.th
                 [ Attr.class "header" ]
-                [ Html.span
-                    [ class [ ShowOnlyMobile ] ]
-                    [ Html.text "Details" ]
-                , Html.span
-                    [ class [ ShowNoneMobile ] ]
-                    [ Html.text "Comment" ]
-                ]
-            , Html.th
-                [ Attr.class "header" ]
-                [ Html.text "Created On" ]
+                [ Html.text "Time" ]
             ]
         ]
 
 
-viewObservationRow : Observation -> Html Msg
-viewObservationRow { id, comment, insertedAt, meta } =
+viewMealRow : MealListOnly -> Html Msg
+viewMealRow { id, meal, time } =
     Html.tr
         []
         [ Html.td []
             [ Html.a
                 [ Attr.class
-                    "bpb fa fa-eye observation-list-to-observation-detail-link"
+                    "bpb fa fa-eye meal-list-to-meal-detail-link"
                 , Attr.attribute "aria-hidden" "true"
                 , styles [ Css.color Css.inherit ]
-                , Router.href <| Router.ObservationDetail id
+                , Router.href <| Router.MealDetail <| fromMealId id
                 ]
                 []
             ]
         , Html.td
-            [ class [ DisplayNoneMobileTableCell ] ]
-            [ Html.text meta.title ]
-        , Html.td
             []
-            [ Html.h6
-                [ class [ ShowOnlyMobile ] ]
-                [ Html.text meta.title ]
-            , Html.div
-                []
-                [ Html.text <| String.slice 0 120 comment ]
-            ]
+            [ Html.text meal ]
         , Html.td
             []
             [ Html.div
                 []
                 [ Html.div
                     []
-                    [ Html.text <| DateFormat.format "%a %d/%b/%y" insertedAt ]
+                    [ Html.text <| DateFormat.format "%a %d/%b/%y" time ]
                 , Html.div
                     []
-                    [ Html.text <| DateFormat.format "%l:%M %p" insertedAt ]
+                    [ Html.text <| DateFormat.format "%l:%M %p" time ]
                 ]
             ]
         ]
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+init : Model
+init =
+    ()

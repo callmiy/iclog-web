@@ -19,7 +19,6 @@ import Observation.Types exposing (Observation)
 import Observation.Channel as Channel exposing (ChannelState)
 import Store exposing (Store, TimeZoneOffset)
 import Phoenix
-import Date.Format as DateFormat
 import Views.FormUtils as FormUtils
 import Form exposing (Form, FieldState)
 import Form.Field as Field exposing (Field)

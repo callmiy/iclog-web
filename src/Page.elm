@@ -8,13 +8,19 @@ module Page
 import Observation.Detail.App as ObservationDetail
 import Observation.List as ObservationList
 import Observation.New.App as ObservationNew
+import Meal.Detail as MealDetail
+import Meal.List as MealList
+import Meal.New as MealNew
 
 
 type Page
-    = ObservationDetail ObservationDetail.Model
+    = Blank
+    | ObservationDetail ObservationDetail.Model
     | ObservationList ObservationList.Model
     | ObservationNew ObservationNew.Model
-    | Blank
+    | MealDetail MealDetail.Model
+    | MealList MealList.Model
+    | MealNew MealNew.Model
 
 
 type PageState

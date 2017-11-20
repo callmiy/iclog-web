@@ -1,12 +1,18 @@
 module View exposing (view)
 
-import Html exposing (Html, div, text, nav, button, span, a, form, input, ul, li, hr, h2, h6)
-import Html.Attributes as Attr exposing (class, type_, href, id, placeholder)
+import Html exposing (Html, Attribute)
+import Html.Attributes as Attr
 import Model exposing (Model, Msg)
 import Page exposing (Page)
 import Observation.Detail.App as ObservationDetail
 import Observation.List as ObservationList
 import Observation.New.App as ObservationNew
+import Meal.Detail as MealDetail
+import Meal.List as MealList
+import Meal.New as MealNew
+import Router
+import Utils exposing ((=>))
+import Css
 
 
 view : Model -> Html Msg
@@ -14,70 +20,104 @@ view ({ pageState } as model) =
     let
         page =
             Page.getPage pageState
+
+        ( pageView, pageTitle ) =
+            viewPage page model
     in
-        div [ class "dh" ]
+        Html.div [ Attr.class "dh" ]
             [ navigation
-            , div
-                [ class "et bmj" ]
-                [ div
+            , Html.div
+                [ Attr.class "et bmj" ]
+                [ Html.div
                     -- we display page headers in class "bls blu"
-                    [ class "bls" ]
-                    [ div
-                        [ class "blt global-page-titles" ]
-                        [ h6
-                            [ class "blv global-title" ]
-                            [ text "Observables" ]
-                        , h2
-                            [ class "blu page-title" ]
-                            [ text "Observations" ]
+                    [ Attr.class "bls" ]
+                    [ Html.div
+                        [ Attr.class "blt global-page-titles" ]
+                        [ Html.h6
+                            [ Attr.class "blv global-title" ]
+                            [ Html.text "Observables" ]
+                        , Html.h4
+                            [ Attr.class "blu page-title"
+                            , styles
+                                [ Css.margin3
+                                    (Css.px 10)
+                                    (Css.px 0)
+                                    (Css.px 10)
+                                ]
+                            ]
+                            [ Html.text pageTitle ]
                         ]
-                    , div
-                        [ class "lf blw" ]
-                        [ div
-                            [ class "asr bld" ]
+                    , Html.div
+                        [ Attr.class "lf blw" ]
+                        [ Html.div
+                            [ Attr.class "asr bld" ]
                             []
                         ]
                     ]
-                , viewPage page model
+                , pageView
                 ]
             ]
 
 
-viewPage : Page -> Model -> Html Msg
+viewPage : Page -> Model -> ( Html Msg, String )
 viewPage page ({ store } as model) =
     case page of
         Page.Blank ->
-            Html.text ""
+            Html.text "" => ""
 
         Page.ObservationNew subModel ->
-            Html.map Model.ObservationNewMsg <| ObservationNew.view subModel
+            (Html.map Model.ObservationNewMsg <|
+                ObservationNew.view subModel
+            )
+                => "Observation"
 
         Page.ObservationList subModel ->
-            Html.map Model.ObservationListMsg <|
-                ObservationList.view subModel (ObservationList.queryStore store)
+            (Html.map Model.ObservationListMsg <|
+                ObservationList.view
+                    subModel
+                    (ObservationList.queryStore store)
+            )
+                => "Observation"
 
         Page.ObservationDetail subModel ->
-            Html.map Model.ObservationDetailMsg <|
+            (Html.map Model.ObservationDetailMsg <|
                 ObservationDetail.view subModel
+            )
+                => "Observation"
+
+        Page.MealNew subModel ->
+            (Html.map Model.MealNewMsg <| MealNew.view subModel) => "Meal"
+
+        Page.MealList subModel ->
+            (Html.map Model.MealListMsg <|
+                MealList.view subModel (MealList.queryStore store)
+            )
+                => "Meal"
+
+        Page.MealDetail subModel ->
+            (Html.map Model.MealDetailMsg <|
+                MealDetail.view subModel
+            )
+                => "Meal"
 
 
 navigation : Html msg
 navigation =
-    div [ class "en ble" ]
-        [ nav
-            [ class "bll" ]
-            [ div
-                [ class "blf" ]
+    Html.div [ Attr.class "en ble" ]
+        [ Html.nav
+            [ Attr.class "bll" ]
+            [ Html.div
+                [ Attr.class "blf" ]
                 [ navCollapseControl
-                , a
-                    [ class "blh bmh", href "#" ]
-                    [ span [ class "bv-logo bch bli" ] [] ]
+                , Html.a
+                    [ Attr.class "blh bmh", Attr.href "#" ]
+                    [ Html.span [ Attr.class "bv-logo bch bli" ] [] ]
                 ]
-            , div
-                [ class "collapse bki", id "nav-toggleable-md" ]
+            , Html.div
+                [ Attr.class "collapse bki", Attr.id "nav-toggleable-md" ]
                 [ navSearchForm
                 , navLinks
-                , hr [ class "bmi aah" ] []
+                , Html.hr [ Attr.class "bmi aah" ] []
                 ]
             ]
         ]
@@ -85,40 +125,58 @@ navigation =
 
 navLinks : Html msg
 navLinks =
-    ul
-        [ class "nav lq nav-stacked st" ]
-        [ li
-            [ class "asv" ]
-            [ text "Observables" ]
-        , li
-            [ class "lp" ]
-            [ a [ class "ln" ] [ text "Observation" ] ]
-        , li
-            [ class "lp" ]
-            [ a [ class "ln" ] [ text "Sleep" ] ]
+    Html.ul
+        [ Attr.class "nav lq nav-stacked st" ]
+        [ Html.li
+            [ Attr.class "asv" ]
+            [ Html.text "Observables" ]
+        , Html.li
+            [ Attr.class "lp" ]
+            [ Html.a
+                [ Attr.class "ln"
+                , Router.href Router.ObservationList
+                ]
+                [ Html.text "Observation" ]
+            ]
+        , Html.li
+            [ Attr.class "lp" ]
+            [ Html.a
+                [ Attr.class "ln"
+                , Router.href Router.MealList
+                ]
+                [ Html.text "Meal" ]
+            ]
         ]
 
 
 navSearchForm : Html msg
 navSearchForm =
-    form
-        [ class "blj" ]
-        [ input
-            [ class "form-control", type_ "text", placeholder "Search..." ]
+    Html.form
+        [ Attr.class "blj" ]
+        [ Html.input
+            [ Attr.class "form-control"
+            , Attr.type_ "text"
+            , Attr.placeholder "Search..."
+            ]
             []
-        , button
-            [ type_ "submit", class "ku" ]
-            [ span [ class "bv bdb" ] [] ]
+        , Html.button
+            [ Attr.type_ "submit", Attr.class "ku" ]
+            [ Html.span [ Attr.class "bv bdb" ] [] ]
         ]
 
 
 navCollapseControl : Html msg
 navCollapseControl =
-    button
-        [ class "bkb bkd blg"
-        , type_ "button"
+    Html.button
+        [ Attr.class "bkb bkd blg"
+        , Attr.type_ "Html.button"
         , Attr.attribute "data-toggle" "collapse"
         , Attr.attribute "data-target" "#nav-toggleable-md"
         ]
-        [ span [ class "yz" ] [ text "Toggle nav" ]
+        [ Html.span [ Attr.class "yz" ] [ Html.text "Toggle nav" ]
         ]
+
+
+styles : List Css.Style -> Attribute msg
+styles =
+    Css.asPairs >> Attr.style

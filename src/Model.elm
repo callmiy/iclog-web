@@ -12,9 +12,13 @@ import Router exposing (Route)
 import Observation.List as ObservationList
 import Observation.Detail.App as ObservationDetail
 import Observation.New.App as ObservationNew
-import Observation.Channel as ObservationChannel exposing (ChannelState)
+import Observation.Channel as ObservationChannel
 import Navigation exposing (Location)
-import Utils exposing ((=>))
+import Utils exposing ((=>), decodeErrorMsg)
+import Meal.Detail as MealDetail
+import Meal.List as MealList
+import Meal.New as MealNew
+import Meal.Channel as MealChannel
 
 
 type alias Model =
@@ -48,9 +52,13 @@ type Msg
     | ObservationDetailMsg ObservationDetail.Msg
     | ObservationListMsg ObservationList.Msg
     | ObservationNewMsg ObservationNew.Msg
+    | MealDetailMsg MealDetail.Msg
+    | MealListMsg MealList.Msg
+    | MealNewMsg MealNew.Msg
     | RouteMsg Route
-    | ObservationChannelMsg ChannelState
+    | ObservationChannelMsg ObservationChannel.ChannelState
     | SetRoute Route
+    | MealChannelMsg MealChannel.ChannelState
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -119,22 +127,114 @@ update msg ({ pageState, store } as model) =
 
         ( ObservationChannelMsg (ObservationChannel.Joined result), _ ) ->
             case result of
-                Ok observations ->
+                Ok data ->
                     { model
-                        | store =
-                            Store.updatePaginatedObservations observations
-                                store
+                        | store = Store.updatePaginatedObservations data store
                     }
                         ! []
 
                 Err err ->
                     let
                         x =
-                            Debug.log
-                                "\n\n ObservationChannelMsg (ObservationChannel.Joined result) error->"
-                                err
+                            Debug.log (decodeErrorMsg msg) err
                     in
                         model ! []
+
+        ( MealChannelMsg (MealChannel.Joined result), _ ) ->
+            case result of
+                Ok data ->
+                    { model
+                        | store = Store.updatePaginatedMeals data store
+                    }
+                        ! []
+
+                Err err ->
+                    let
+                        x =
+                            Debug.log (decodeErrorMsg msg) err
+                    in
+                        model ! []
+
+        ( MealChannelMsg (MealChannel.MealCreated result), _ ) ->
+            case result of
+                Ok data ->
+                    { model
+                        | store = Store.addMeal data store
+                    }
+                        ! []
+
+                Err err ->
+                    let
+                        x =
+                            Debug.log (decodeErrorMsg msg) err
+                    in
+                        model ! []
+
+        ( MealChannelMsg (MealChannel.MealUpdated result), _ ) ->
+            case result of
+                Ok data ->
+                    { model
+                        | store = Store.updateMeal data store
+                    }
+                        ! []
+
+                Err err ->
+                    let
+                        x =
+                            Debug.log (decodeErrorMsg msg) err
+                    in
+                        model ! []
+
+        ( MealListMsg subMsg, Page.MealList subModel ) ->
+            let
+                ( ( newSubModel, cmd_ ), externalMsg ) =
+                    MealList.queryStore store
+                        |> MealList.update subMsg subModel
+
+                cmd =
+                    Cmd.map MealListMsg cmd_
+            in
+                case externalMsg of
+                    MealList.MealsReceived meals ->
+                        { model
+                            | pageState =
+                                Page.Loaded <|
+                                    Page.MealList newSubModel
+                            , store =
+                                Store.updatePaginatedMeals
+                                    meals
+                                    store
+                        }
+                            ! [ cmd ]
+
+                    MealList.None ->
+                        model ! [ cmd ]
+
+        ( MealNewMsg subMsg, Page.MealNew subModel ) ->
+            let
+                ( newSubModel, cmd ) =
+                    MealNew.queryStore store
+                        |> MealNew.update subMsg subModel
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.MealNew newSubModel
+                }
+                    ! [ Cmd.map MealNewMsg cmd ]
+
+        ( MealDetailMsg subMsg, Page.MealDetail subModel ) ->
+            let
+                ( newSubModel, cmd ) =
+                    MealDetail.queryStore store
+                        |> MealDetail.update subMsg subModel
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.MealDetail newSubModel
+                }
+                    ! [ Cmd.map MealDetailMsg cmd ]
 
         _ ->
             ( model, Cmd.none )
@@ -152,7 +252,11 @@ setRoute ({ store } as model) route =
                     ObservationDetail.queryStore store
                         |> ObservationDetail.init id_
             in
-                { model | pageState = Page.Loaded <| Page.ObservationDetail subModel }
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.ObservationDetail subModel
+                }
                     ! [ Cmd.map ObservationDetailMsg cmd ]
 
         Router.ObservationNew ->
@@ -160,14 +264,53 @@ setRoute ({ store } as model) route =
                 subModel =
                     ObservationNew.init
             in
-                { model | pageState = Page.Loaded <| Page.ObservationNew subModel }
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.ObservationNew subModel
+                }
                     ! []
 
         Router.ObservationList ->
             { model
-                | pageState = Page.Loaded <| Page.ObservationList ObservationList.init
+                | pageState =
+                    Page.Loaded <|
+                        Page.ObservationList ObservationList.init
             }
                 ! []
+
+        Router.MealDetail id_ ->
+            let
+                ( subModel, cmd ) =
+                    MealDetail.queryStore store
+                        |> MealDetail.init id_
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.MealDetail subModel
+                }
+                    ! [ Cmd.map MealDetailMsg cmd ]
+
+        Router.MealList ->
+            { model
+                | pageState =
+                    Page.Loaded <|
+                        Page.MealList MealList.init
+            }
+                ! []
+
+        Router.MealNew ->
+            let
+                ( subModel, cmd ) =
+                    MealNew.init
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.MealNew subModel
+                }
+                    ! [ Cmd.map MealNewMsg cmd ]
 
 
 updateObservationList :

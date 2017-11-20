@@ -12,6 +12,7 @@ import Observation.New.App as ObservationNew
 import Observation.Channel as ObservationChannel
 import Navigation
 import Router
+import Meal.Channel as MealChannel
 
 
 subs : Model -> Sub Msg
@@ -26,13 +27,20 @@ subs model =
                     []
 
                 Page.ObservationNew subModel ->
-                    [ Sub.map Model.ObservationNewMsg <| ObservationNew.subscriptions subModel ]
+                    [ Sub.map Model.ObservationNewMsg <|
+                        ObservationNew.subscriptions subModel
+                    ]
 
                 Page.ObservationList subModel ->
                     []
 
                 Page.ObservationDetail subModel ->
-                    [ Sub.map Model.ObservationDetailMsg <| ObservationDetail.subscriptions subModel ]
+                    [ Sub.map Model.ObservationDetailMsg <|
+                        ObservationDetail.subscriptions subModel
+                    ]
+
+                _ ->
+                    []
     in
         Sub.batch
             ([ phoenixSubscription model ] ++ subs)
@@ -41,7 +49,8 @@ subs model =
 socket : String -> Socket Msg
 socket url =
     Socket.init url
-        |> Socket.reconnectTimer (\backoffIteration -> (backoffIteration + 1) * 5000 |> toFloat)
+        |> Socket.reconnectTimer
+            (\backoffIteration -> (backoffIteration + 1) * 5000 |> toFloat)
 
 
 phoenixSubscription : Model -> Sub Msg
@@ -53,7 +62,13 @@ phoenixSubscription ({ store, pageState } as model) =
                     Page.getPage pageState
             in
                 Phoenix.connect (socket url)
-                    [ Channel.map Model.ObservationChannelMsg ObservationChannel.channel ]
+                    [ Channel.map
+                        Model.ObservationChannelMsg
+                        ObservationChannel.channel
+                    , Channel.map
+                        Model.MealChannelMsg
+                        MealChannel.channel
+                    ]
 
         Nothing ->
             Sub.none

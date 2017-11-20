@@ -30,6 +30,9 @@ type Route
     | ObservationDetail String
     | ObservationList
     | ObservationNew
+    | MealDetail String
+    | MealList
+    | MealNew
 
 
 router : Parser (Route -> a) a
@@ -39,6 +42,9 @@ router =
         , Url.map ObservationNew (s "observations" </> (s "new"))
         , Url.map ObservationList (s "observations")
         , Url.map ObservationDetail (s "observations" </> Url.string)
+        , Url.map MealNew (s "meals" </> (s "new"))
+        , Url.map MealList (s "meals")
+        , Url.map MealDetail (s "meals" </> Url.string)
         ]
 
 
@@ -66,11 +72,20 @@ routeToUrl route =
                 ObservationNew ->
                     [ "observations/new" ]
 
-                NotFound ->
-                    [ "404" ]
-
                 ObservationDetail id_ ->
                     [ "observations", id_ ]
+
+                MealList ->
+                    [ "meals" ]
+
+                MealNew ->
+                    [ "meals/new" ]
+
+                MealDetail id_ ->
+                    [ "meals", id_ ]
+
+                NotFound ->
+                    [ "404" ]
     in
         "#/" ++ String.join "/" pieces
 

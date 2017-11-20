@@ -12,29 +12,50 @@ module Utils
         , defaultPaginationParamsVar
         , defaultPagination
         , nonBreakingSpace
-        , viewPagination
         , toPaginationParamsVars
         , nonEmpty
         , unquoteString
         , unSubmit
         , unknownServerError
         , updatePaginationEntriesBy
+        , graphQlEndpointHelper
+        , decodeGraphQlResponse
+        , formatDateForForm
+        , formatDateISOWithTimeZone
+        , graphQlQueryParams
+        , decodeErrorMsg
+        , (<=>)
         )
 
 import Date exposing (Date)
-import GraphQL.Request.Builder as Grb exposing (ValueSpec, NonNull, customScalar)
-import GraphQL.Request.Builder.Variable as Var exposing (VariableSpec, Variable)
+import GraphQL.Request.Builder as Grb
+    exposing
+        ( ValueSpec
+        , NonNull
+        , customScalar
+        , Request
+        )
+import GraphQL.Request.Builder.Variable as Var
+    exposing
+        ( VariableSpec
+        , Variable
+        )
 import Json.Decode as Jd exposing (Decoder)
-import Html exposing (Html)
-import Html.Attributes as Attr
-import Html.Events exposing (onClick)
 import Form.Validate as Validate exposing (Validation)
+import Json.Encode as Je
+import Date.Format as DateFormat
+import Date.Extra.Duration as Duration
 
 
 (=>) : a -> b -> ( a, b )
 (=>) =
     (,)
 infixl 0 =>
+
+
+(<=>) : a -> b -> c -> ( a, b, c )
+(<=>) a b c =
+    ( a, b, c )
 
 
 type DateTimeType
@@ -146,45 +167,6 @@ nonBreakingSpace =
     " "
 
 
-viewPagination :
-    Pagination
-    -> (Pagination -> msg)
-    -> Html msg
-viewPagination ({ pageNumber, totalPages } as pagination) nextPageMsg =
-    Html.div
-        [ Attr.style [ ( "text-align", "center" ) ] ]
-        [ Html.div
-            [ Attr.class "btn-group" ]
-            [ Html.button
-                [ Attr.type_ "button"
-                , Attr.class "btn btn-outline-secondary"
-                , Attr.disabled <| pageNumber < 2
-                , onClick <|
-                    nextPageMsg { pagination | pageNumber = pageNumber - 1 }
-                , Attr.id "pagination-previous-page-arrow"
-                ]
-                [ Html.text "<" ]
-            , Html.button
-                [ Attr.type_ "button"
-                , Attr.class "btn btn-outline-secondary"
-                , Attr.disabled <| pageNumber == totalPages
-                , onClick <|
-                    nextPageMsg { pagination | pageNumber = pageNumber + 1 }
-                , Attr.id "pagination-next-page-arrow"
-                ]
-                [ Html.text ">" ]
-            ]
-        , Html.div
-            []
-            [ Html.text <|
-                "Page "
-                    ++ (toString pageNumber)
-                    ++ " of "
-                    ++ (toString totalPages)
-            ]
-        ]
-
-
 nonEmpty : Int -> Validation a String
 nonEmpty minLength =
     Validate.string
@@ -222,3 +204,63 @@ unknownServerError :
     -> { r | serverError : Maybe String }
 unknownServerError model =
     { model | serverError = Just "Something went wrong!" }
+
+
+graphQlQueryParams : Request operationType result -> ( String, Je.Value )
+graphQlQueryParams request =
+    let
+        query : String
+        query =
+            Grb.requestBody request
+
+        params : Je.Value
+        params =
+            Grb.jsonVariableValues request
+                |> Maybe.withDefault Je.null
+    in
+        ( query, params )
+
+
+graphQlEndpointHelper :
+    (a -> Request operationType result)
+    -> a
+    -> ( String, Je.Value, Jd.Value -> Result String result )
+graphQlEndpointHelper queryRequest vars =
+    let
+        request =
+            queryRequest vars
+
+        responseDecoder =
+            Grb.responseDataDecoder request
+
+        ( query, params ) =
+            graphQlQueryParams request
+
+        response =
+            decodeGraphQlResponse responseDecoder
+    in
+        ( query, params, response )
+
+
+decodeGraphQlResponse : Decoder a -> Jd.Value -> Result String a
+decodeGraphQlResponse d response =
+    Jd.decodeValue (Jd.at [ "data" ] d) response
+
+
+formatDateForForm : Date -> String
+formatDateForForm date =
+    DateFormat.format "%a %d/%b/%y %I:%M %p" date
+
+
+formatDateISOWithTimeZone :
+    Int
+    -> Date
+    -> String
+formatDateISOWithTimeZone tzOffset date =
+    Duration.add Duration.Minute tzOffset date
+        |> DateFormat.formatISO8601
+
+
+decodeErrorMsg : msg -> String
+decodeErrorMsg msg =
+    "\n\nError decoding response " ++ toString msg
