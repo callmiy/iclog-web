@@ -30,7 +30,7 @@ import Utils
 import Meal.Types
     exposing
         ( PaginatedMeals
-        , MealListOnly
+        , Meal
         )
 
 
@@ -138,7 +138,7 @@ updatePaginatedMeals pobs (Store store) =
     Store { store | paginatedMeals = pobs }
 
 
-addMeal : MealListOnly -> Store -> Store
+addMeal : Meal -> Store -> Store
 addMeal meal store =
     let
         { entries, pagination } =
@@ -152,7 +152,7 @@ addMeal meal store =
         updatePaginatedMeals pml store
 
 
-updateMeal : MealListOnly -> Store -> Store
+updateMeal : Meal -> Store -> Store
 updateMeal ({ id } as meal) store =
     let
         { entries, pagination } =

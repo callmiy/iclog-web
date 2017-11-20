@@ -34,7 +34,7 @@ import DateTimePicker.Config as DateTimePickerConfig
         , defaultDateTimePickerConfig
         , TimePickerConfig
         )
-import Meal.Types exposing (Meal, MealId, fromMealId)
+import Meal.Types exposing (MealId, fromMealId)
 import Store exposing (Store, TimeZoneOffset)
 import Css
 import Views.Nav exposing (nav)

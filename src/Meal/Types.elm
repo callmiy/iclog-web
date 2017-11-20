@@ -1,15 +1,15 @@
 module Meal.Types
     exposing
-        ( Meal
+        ( MealWithComments
         , MealId
         , PaginatedMeals
         , Comment
-        , MealListOnly
+        , Meal
         , fromMealId
         , toMealId
         , fromCommentId
         , toCommentId
-        , mealListOnlyDecoder
+        , mealDecoder
         )
 
 import Date exposing (Date)
@@ -18,7 +18,7 @@ import Json.Decode as Jd exposing (Decoder)
 import Json.Decode.Extra as Jde exposing ((|:))
 
 
-type alias Meal =
+type alias MealWithComments =
     { id : MealId
     , meal : String
     , time : Date
@@ -26,7 +26,7 @@ type alias Meal =
     }
 
 
-type alias MealListOnly =
+type alias Meal =
     { id : MealId
     , meal : String
     , time : Date
@@ -34,7 +34,7 @@ type alias MealListOnly =
 
 
 type alias PaginatedMeals =
-    { entries : List MealListOnly
+    { entries : List Meal
     , pagination : Pagination
     }
 
@@ -74,9 +74,9 @@ toCommentId id_ =
     CommentId id_
 
 
-mealListOnlyDecoder : Decoder MealListOnly
-mealListOnlyDecoder =
-    Jd.succeed MealListOnly
+mealDecoder : Decoder Meal
+mealDecoder =
+    Jd.succeed Meal
         |: (Jd.field "id" <| Jd.map toMealId Jd.string)
         |: (Jd.field "meal" Jd.string)
         |: (Jd.field "time" Jde.date)

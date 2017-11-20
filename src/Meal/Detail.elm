@@ -16,10 +16,10 @@ import Views.Nav exposing (nav)
 import Router
 import Meal.Types
     exposing
-        ( Meal
-        , MealId
+        ( MealId
         , fromMealId
         , Comment
+        , MealWithComments
         )
 import Store exposing (Store, TimeZoneOffset)
 import Date exposing (Date)
@@ -50,7 +50,7 @@ import Views.CreationSuccessAlert as CreationSuccessAlert
 
 
 type alias Model =
-    { meal : Maybe Meal
+    { meal : Maybe MealWithComments
     , viewing : Viewing
     , serverError : Maybe String
     , submitting : Bool
@@ -105,7 +105,7 @@ type Msg
     | FormMsg Form.Msg
     | DatePickerChanged DateTimePicker.State (Maybe Date)
     | ResetForm
-    | SubmitForm Meal
+    | SubmitForm MealWithComments
     | DismissEditSuccessInfo
 
 
@@ -226,7 +226,7 @@ update msg model store =
             { model | editSuccess = False } ! []
 
 
-mealReceived : Meal -> Model -> Model
+mealReceived : MealWithComments -> Model -> Model
 mealReceived meal_ model =
     { model
         | meal = Just meal_
@@ -304,7 +304,7 @@ view ({ meal, viewing } as model) =
             ]
 
 
-viewDetail : Meal -> Model -> Html Msg
+viewDetail : MealWithComments -> Model -> Html Msg
 viewDetail ({ meal, time, comments } as meal_) model =
     let
         alertId =
@@ -400,7 +400,7 @@ commentView { text, insertedAt } =
         ]
 
 
-viewEdit : Meal -> Model -> Html Msg
+viewEdit : MealWithComments -> Model -> Html Msg
 viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
     let
         ( mealControl, mealInvalid ) =

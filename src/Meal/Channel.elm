@@ -13,14 +13,14 @@ import Phoenix.Push as Push exposing (Push)
 import Json.Encode as Je
 import Meal.Types as Types
     exposing
-        ( Meal
+        ( MealWithComments
         , PaginatedMeals
         , Comment
         , MealId
-        , MealListOnly
+        , Meal
         , toMealId
         , fromMealId
-        , mealListOnlyDecoder
+        , mealDecoder
         )
 import Json.Decode as Jd exposing (Decoder)
 import GraphQL.Request.Builder as Grb
@@ -58,12 +58,12 @@ type ChannelState
     | ListFails Je.Value
     | CreateSucceeds (Result String MealId)
     | CreateFails Je.Value
-    | MealCreated (Result String MealListOnly)
-    | GetSucceeds (Result String Meal)
+    | MealCreated (Result String Meal)
+    | GetSucceeds (Result String MealWithComments)
     | GetFails Je.Value
-    | UpdateSucceeds (Result String Meal)
+    | UpdateSucceeds (Result String MealWithComments)
     | UpdateFails Je.Value
-    | MealUpdated (Result String MealListOnly)
+    | MealUpdated (Result String Meal)
 
 
 channel : Channel ChannelState
@@ -81,7 +81,7 @@ channel =
                 }
 
         updateResponse =
-            Jd.decodeValue mealListOnlyDecoder
+            Jd.decodeValue mealDecoder
     in
         channelName
             |> Channel.init
@@ -131,7 +131,7 @@ createMutationName =
     "meal"
 
 
-createRequest : CreateQueryVars -> Request Mutation MealListOnly
+createRequest : CreateQueryVars -> Request Mutation Meal
 createRequest ({ comment } as queryVars) =
     let
         mealVar =
@@ -154,7 +154,7 @@ createRequest ({ comment } as queryVars) =
                     []
                     (Grb.map toMealId Grb.id)
 
-        mutation : Document Mutation MealListOnly CreateQueryVars
+        mutation : Document Mutation Meal CreateQueryVars
         mutation =
             Grb.mutationDocument <|
                 Grb.extract <|
@@ -164,7 +164,7 @@ createRequest ({ comment } as queryVars) =
                         , ( "time", Arg.variable timeVar )
                         , ( "comment", Arg.variable commentVar )
                         ]
-                        mealListOnlyResponse
+                        mealResponse
     in
         Grb.request queryVars mutation
 
@@ -210,7 +210,7 @@ paginatedMealsQueryName =
 paginatedMealsResponse : ValueSpec Grb.NonNull Grb.ObjectType PaginatedMeals vars
 paginatedMealsResponse =
     Grb.object PaginatedMeals
-        |> Grb.with (Grb.field "entries" [] <| Grb.list mealListOnlyResponse)
+        |> Grb.with (Grb.field "entries" [] <| Grb.list mealResponse)
         |> Grb.with (Grb.field "pagination" [] paginationGraphQlResponse)
 
 
@@ -263,20 +263,20 @@ mealQueryName =
 
 mealQueryRequest :
     String
-    -> Request Query Meal
+    -> Request Query MealWithComments
 mealQueryRequest id_ =
     let
         idVar =
             Var.required "id" (always id_) Var.id
 
-        queryRoot : Document Query Meal String
+        queryRoot : Document Query MealWithComments String
         queryRoot =
             Grb.queryDocument <|
                 Grb.extract <|
                     Grb.field
                         mealQueryName
                         [ ( "id", Arg.variable idVar ) ]
-                        mealResponse
+                        mealWithCommentResponse
     in
         Grb.request id_ queryRoot
 
@@ -317,7 +317,7 @@ updateMutationName =
 
 updateRequest :
     UpdateParams
-    -> Request Mutation Meal
+    -> Request Mutation MealWithComments
 updateRequest params =
     let
         idVar =
@@ -329,7 +329,7 @@ updateRequest params =
         timeVar =
             Var.required "time" .time (Var.nullable Var.string)
 
-        queryRoot : Document Mutation Meal UpdateParams
+        queryRoot : Document Mutation MealWithComments UpdateParams
         queryRoot =
             Grb.mutationDocument <|
                 Grb.extract <|
@@ -339,7 +339,7 @@ updateRequest params =
                         , ( "meal", Arg.variable mealVar )
                         , ( "time", Arg.variable timeVar )
                         ]
-                        mealResponse
+                        mealWithCommentResponse
     in
         Grb.request params queryRoot
 
@@ -348,17 +348,17 @@ updateRequest params =
 --------------------------------------------------------
 
 
-mealListOnlyResponse : ValueSpec Grb.NonNull Grb.ObjectType MealListOnly vars
-mealListOnlyResponse =
-    Grb.object MealListOnly
+mealResponse : ValueSpec Grb.NonNull Grb.ObjectType Meal vars
+mealResponse =
+    Grb.object Meal
         |> Grb.with (Grb.field "id" [] (Grb.map Types.toMealId Grb.id))
         |> Grb.with (Grb.field "meal" [] Grb.string)
         |> Grb.with (Grb.field "time" [] Utils.dateTimeType)
 
 
-mealResponse : ValueSpec Grb.NonNull Grb.ObjectType Meal vars
-mealResponse =
-    Grb.object Meal
+mealWithCommentResponse : ValueSpec Grb.NonNull Grb.ObjectType MealWithComments vars
+mealWithCommentResponse =
+    Grb.object MealWithComments
         |> Grb.with (Grb.field "id" [] (Grb.map Types.toMealId Grb.id))
         |> Grb.with (Grb.field "meal" [] Grb.string)
         |> Grb.with (Grb.field "time" [] Utils.dateTimeType)

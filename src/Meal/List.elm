@@ -17,7 +17,7 @@ import Css
 import Router
 import Store exposing (Store)
 import Meal.Channel as Channel exposing (ChannelState)
-import Meal.Types exposing (Meal, PaginatedMeals, fromMealId, MealListOnly)
+import Meal.Types exposing (PaginatedMeals, fromMealId, Meal)
 import Utils
     exposing
         ( Pagination
@@ -123,7 +123,7 @@ view model { paginatedMeals } =
             ]
 
 
-viewTable : List MealListOnly -> Html Msg
+viewTable : List Meal -> Html Msg
 viewTable meals =
     Html.div
         [ Attr.class "iw" ]
@@ -156,7 +156,7 @@ viewHeader =
         ]
 
 
-viewMealRow : MealListOnly -> Html Msg
+viewMealRow : Meal -> Html Msg
 viewMealRow { id, meal, time } =
     Html.tr
         []
