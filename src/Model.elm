@@ -24,6 +24,8 @@ import Meal.Channel as MealChannel
 type alias Model =
     { store : Store
     , pageState : PageState
+    , showingMobileNav : Bool
+    , route : Route
     }
 
 
@@ -39,6 +41,8 @@ init flag initialLocation =
         setRoute
             { store = store
             , pageState = Loaded Page.Blank
+            , showingMobileNav = False
+            , route = route
             }
             route
 
@@ -59,13 +63,19 @@ type Msg
     | ObservationChannelMsg ObservationChannel.ChannelState
     | SetRoute Route
     | MealChannelMsg MealChannel.ChannelState
+    | ToggleShowingMobileNav
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({ pageState, store } as model) =
     case ( msg, Page.getPage pageState ) of
         ( SetRoute route, _ ) ->
-            setRoute model route
+            setRoute
+                { model
+                    | showingMobileNav = False
+                    , route = route
+                }
+                route
 
         ( ObservationNewMsg subMsg, Page.ObservationNew subModel ) ->
             let
@@ -235,6 +245,9 @@ update msg ({ pageState, store } as model) =
                             Page.MealDetail newSubModel
                 }
                     ! [ Cmd.map MealDetailMsg cmd ]
+
+        ( ToggleShowingMobileNav, _ ) ->
+            { model | showingMobileNav = not model.showingMobileNav } ! []
 
         _ ->
             ( model, Cmd.none )

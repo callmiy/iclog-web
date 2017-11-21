@@ -2,7 +2,8 @@ module View exposing (view)
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
-import Model exposing (Model, Msg)
+import Html.Events exposing (onClick)
+import Model exposing (Model, Msg(..))
 import Page exposing (Page)
 import Observation.Detail.App as ObservationDetail
 import Observation.List as ObservationList
@@ -10,7 +11,7 @@ import Observation.New.App as ObservationNew
 import Meal.Detail.View as MealDetailView
 import Meal.List as MealList
 import Meal.New as MealNew
-import Router
+import Router exposing (Route)
 import Utils exposing ((=>))
 import Css
 
@@ -25,7 +26,7 @@ view ({ pageState } as model) =
             viewPage page model
     in
         Html.div [ Attr.class "dh" ]
-            [ navigation
+            [ navigation model
             , Html.div
                 [ Attr.class "et bmj" ]
                 [ Html.div
@@ -101,52 +102,63 @@ viewPage page ({ store } as model) =
                 => "Meal"
 
 
-navigation : Html msg
-navigation =
+navigation : Model -> Html Msg
+navigation model =
     Html.div [ Attr.class "en ble" ]
         [ Html.nav
             [ Attr.class "bll" ]
             [ Html.div
                 [ Attr.class "blf" ]
-                [ navCollapseControl
+                [ navCollapseControl model.showingMobileNav
                 , Html.a
                     [ Attr.class "blh bmh", Attr.href "#" ]
                     [ Html.span [ Attr.class "bv-logo bch bli" ] [] ]
                 ]
             , Html.div
-                [ Attr.class "collapse bki", Attr.id "nav-toggleable-md" ]
+                [ Attr.classList
+                    [ ( "collapse bki", True )
+                    , ( "show", model.showingMobileNav )
+                    ]
+                , Attr.id "nav-toggleable-md"
+                ]
                 [ navSearchForm
-                , navLinks
+                , navLinks model.route
                 , Html.hr [ Attr.class "bmi aah" ] []
                 ]
             ]
         ]
 
 
-navLinks : Html msg
-navLinks =
-    Html.ul
-        [ Attr.class "nav lq nav-stacked st" ]
-        [ Html.li
-            [ Attr.class "asv" ]
-            [ Html.text "Observables" ]
-        , Html.li
-            [ Attr.class "lp" ]
-            [ Html.a
-                [ Attr.class "ln"
-                , Router.href Router.ObservationList
+navLinks : Route -> Html msg
+navLinks route =
+    let
+        stringRoute =
+            toString route
+
+        mealActive =
+            String.startsWith "Meal" stringRoute
+
+        observationActive =
+            String.startsWith "Observation" stringRoute
+
+        link_ route_ active text_ =
+            Html.li
+                [ Attr.class "lp" ]
+                [ Html.a
+                    [ Attr.classList [ ( "ln", True ), ( "active", active ) ]
+                    , Router.href route_
+                    ]
+                    [ Html.text text_ ]
                 ]
-                [ Html.text "Observation" ]
+    in
+        Html.ul
+            [ Attr.class "nav lq nav-stacked st" ]
+            [ Html.li
+                [ Attr.class "asv" ]
+                [ Html.text "Observables" ]
+            , link_ Router.ObservationList observationActive "Observation"
+            , link_ Router.MealList mealActive "Meal"
             ]
-        , Html.li
-            [ Attr.class "lp" ]
-            [ Html.a
-                [ Attr.class "ln"
-                , Router.href Router.MealList
-                ]
-                [ Html.text "Meal" ]
-            ]
-        ]
 
 
 navSearchForm : Html msg
@@ -165,15 +177,19 @@ navSearchForm =
         ]
 
 
-navCollapseControl : Html msg
-navCollapseControl =
+navCollapseControl : Bool -> Html Msg
+navCollapseControl showingMobileNav =
     Html.button
-        [ Attr.class "bkb bkd blg"
+        [ Attr.classList
+            [ ( "bkb bkd blg", True )
+            , ( "collapsed", not showingMobileNav )
+            ]
         , Attr.type_ "button"
-        , Attr.attribute "data-toggle" "collapse"
-        , Attr.attribute "data-target" "#nav-toggleable-md"
+        , onClick ToggleShowingMobileNav
         ]
-        [ Html.span [ Attr.class "yz" ] [ Html.text "Toggle nav" ]
+        [ Html.span
+            [ Attr.class "yz" ]
+            [ Html.text "Toggle nav" ]
         ]
 
 
