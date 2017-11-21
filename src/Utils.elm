@@ -25,6 +25,7 @@ module Utils
         , graphQlQueryParams
         , decodeErrorMsg
         , (<=>)
+        , focusEl
         )
 
 import Date exposing (Date)
@@ -45,6 +46,8 @@ import Form.Validate as Validate exposing (Validation)
 import Json.Encode as Je
 import Date.Format as DateFormat
 import Date.Extra.Duration as Duration
+import Task
+import Dom
 
 
 (=>) : a -> b -> ( a, b )
@@ -264,3 +267,9 @@ formatDateISOWithTimeZone tzOffset date =
 decodeErrorMsg : msg -> String
 decodeErrorMsg msg =
     "\n\nError decoding response " ++ toString msg
+
+
+focusEl : String -> (() -> msg) -> Cmd msg
+focusEl id_ msg =
+    Task.attempt (Result.withDefault () >> msg) <|
+        Dom.focus id_

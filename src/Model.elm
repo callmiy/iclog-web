@@ -15,7 +15,7 @@ import Observation.New.App as ObservationNew
 import Observation.Channel as ObservationChannel
 import Navigation exposing (Location)
 import Utils exposing ((=>), decodeErrorMsg)
-import Meal.Detail as MealDetail
+import Meal.Detail.App as MealDetail
 import Meal.List as MealList
 import Meal.New as MealNew
 import Meal.Channel as MealChannel

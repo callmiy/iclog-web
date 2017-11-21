@@ -6,6 +6,7 @@ module Meal.Channel
         , create
         , get
         , update
+        , comment
         )
 
 import Phoenix.Channel as Channel exposing (Channel)
@@ -42,6 +43,7 @@ import Utils
         , paginationGraphQlResponse
         , graphQlQueryParams
         )
+import Views.CommentEdit exposing (CommentValue)
 
 
 channelName : String
@@ -64,6 +66,8 @@ type ChannelState
     | UpdateSucceeds (Result String MealWithComments)
     | UpdateFails Je.Value
     | MealUpdated (Result String Meal)
+    | CommentSucceeds (Result String Comment)
+    | CommentFails Je.Value
 
 
 channel : Channel ChannelState
@@ -122,13 +126,24 @@ create vars =
 type alias CreateQueryVars =
     { meal : String
     , time : String
-    , comment : Maybe { text : String }
+    , comment : Maybe CommentValue
     }
 
 
 createMutationName : String
 createMutationName =
     "meal"
+
+
+commentVar : Variable { r | comment : Maybe CommentValue }
+commentVar =
+    let
+        commentVar_ =
+            Var.object
+                "Comment"
+                [ Var.field "text" .text Var.string ]
+    in
+        Var.required "comment" .comment (Var.nullable commentVar_)
 
 
 createRequest : CreateQueryVars -> Request Mutation Meal
@@ -139,14 +154,6 @@ createRequest ({ comment } as queryVars) =
 
         timeVar =
             Var.required "time" .time Var.string
-
-        commentVar_ =
-            Var.object
-                "Comment"
-                [ Var.field "text" .text Var.string ]
-
-        commentVar =
-            Var.required "comment" .comment (Var.nullable commentVar_)
 
         idResponse =
             Grb.extract <|
@@ -307,6 +314,7 @@ type alias UpdateParams =
     { id : MealId
     , meal : Maybe String
     , time : Maybe String
+    , comment : Maybe CommentValue
     }
 
 
@@ -338,8 +346,67 @@ updateRequest params =
                         [ ( "id", Arg.variable idVar )
                         , ( "meal", Arg.variable mealVar )
                         , ( "time", Arg.variable timeVar )
+                        , ( "comment", Arg.variable commentVar )
                         ]
                         mealWithCommentResponse
+    in
+        Grb.request params queryRoot
+
+
+
+-- create a meal comment
+
+
+comment : CommentParams -> Push ChannelState
+comment args =
+    let
+        ( query, params, response ) =
+            graphQlEndpointHelper commentRequest args
+
+        payLoad =
+            Je.object
+                [ ( "query", Je.string query )
+                , ( "params", params )
+                ]
+    in
+        Push.init channelName "comment_meal"
+            |> Push.withPayload payLoad
+            |> Push.onOk (CommentSucceeds << response)
+            |> Push.onError CommentFails
+
+
+type alias CommentParams =
+    { text : String
+    , mealId : MealId
+    }
+
+
+commentMutationName : String
+commentMutationName =
+    "mealComment"
+
+
+commentRequest :
+    CommentParams
+    -> Request Mutation Comment
+commentRequest params =
+    let
+        textVar =
+            Var.required "text" .text Var.string
+
+        mealIdVar =
+            Var.required "mealId" (.mealId >> fromMealId) Var.id
+
+        queryRoot : Document Mutation Comment CommentParams
+        queryRoot =
+            Grb.mutationDocument <|
+                Grb.extract <|
+                    Grb.field
+                        commentMutationName
+                        [ ( "text", Arg.variable textVar )
+                        , ( "mealId", Arg.variable mealIdVar )
+                        ]
+                        commentResponse
     in
         Grb.request params queryRoot
 

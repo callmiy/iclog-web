@@ -73,3 +73,11 @@ button[disabled]{
 .form-control {
   font-size: 1rem;
 }
+
+.viewing-comment + .viewing-comment {
+  margin-top: 3px;
+}
+
+.alert{
+  padding: 0rem 1.25rem;
+}

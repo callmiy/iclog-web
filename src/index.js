@@ -45,7 +45,7 @@ $(function applyJquery() {
     d.rows = minRows; // eslint-disable-line no-param-reassign
     const minBase = Math.min(48, d.baseScrollHeight);
     rows = Math.ceil((d.scrollHeight - minBase) / 14);
-    d.rows = minRows + rows; // eslint-disable-line no-param-reassign
+    d.rows = Math.max(5, minRows + rows); // eslint-disable-line no-param-reassign
   }
 
 

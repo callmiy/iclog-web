@@ -26,6 +26,7 @@ import Utils as Utils
         , unSubmit
         , unknownServerError
         , decodeErrorMsg
+        , focusEl
         )
 import DateTimePicker
 import DateTimePicker.Config as DateTimePickerConfig
@@ -41,10 +42,11 @@ import Views.Nav exposing (nav)
 import Router
 import Views.FormUtils as FormUtils
 import Task
-import Dom
 import Meal.Channel as Channel exposing (ChannelState)
 import Phoenix
 import Views.CreationSuccessAlert as CreationSuccessAlert
+import Views.CommentEdit as CommentEdit exposing (CommentValue)
+import Meal.Util exposing (cardTitle)
 
 
 type alias Model =
@@ -62,10 +64,6 @@ type alias FormValue =
     { meal : String
     , comment : CommentValue
     }
-
-
-type alias CommentValue =
-    { text : String }
 
 
 initialFields : List ( String, Field )
@@ -88,7 +86,7 @@ defaults =
 init : ( Model, Cmd Msg )
 init =
     defaults
-        ! [ focusEl "new-meal-input"
+        ! [ focusEl "new-meal-input" NoOp
           , DateTimePicker.initialCmd
                 DatePickerInitialMsg
                 DateTimePicker.initialState
@@ -149,26 +147,12 @@ update msg ({ form } as model) store =
 
         ToggleCommentForm ->
             let
-                newModel =
-                    { model
-                        | creatingComment = not model.creatingComment
-                    }
-
                 ( model_, cmd ) =
-                    if model.creatingComment == True then
-                        ( revalidateForm
-                            (Form.Input
-                                "comment.text"
-                                Form.Textarea
-                                (Field.String "")
-                            )
-                            newModel
-                        , Cmd.none
-                        )
-                    else
-                        ( newModel
-                        , focusEl "new-meal-comment"
-                        )
+                    CommentEdit.toggleCommentForm
+                        model
+                        revalidateForm
+                        commentControlId
+                        NoOp
             in
                 model_ ! [ cmd ]
 
@@ -289,14 +273,13 @@ resetForm model =
     }
 
 
-focusEl : String -> Cmd Msg
-focusEl id_ =
-    Task.attempt (Result.withDefault () >> NoOp) <|
-        Dom.focus id_
-
-
 
 -- VIEW
+
+
+commentControlId : String
+commentControlId =
+    "new-meal-comment"
 
 
 view : Model -> Html Msg
@@ -305,8 +288,12 @@ view ({ form, serverError, submitting } as model) =
         ( mealControl, mealInvalid ) =
             formControlMeal model
 
-        ( commentControl, commentInvalid ) =
-            formControlComment model
+        ( commentControl, commentInvalid, _ ) =
+            CommentEdit.formControl4
+                model.form
+                commentControlId
+                FormMsg
+                model.creatingComment
 
         ( timeControl, timeInvalid ) =
             formControlTime model
@@ -356,6 +343,7 @@ view ({ form, serverError, submitting } as model) =
                             , onSubmit SubmitForm
                             ]
                             [ FormUtils.textualErrorBox model.serverError
+                            , cardTitle "New meal"
                             , Html.div
                                 [ Attr.class "new-meal-form-controls"
                                 , Attr.id "new-meal-form-controls"
@@ -363,9 +351,10 @@ view ({ form, serverError, submitting } as model) =
                                 ]
                                 [ mealControl
                                 , timeControl
-                                , commentView
+                                , CommentEdit.view
                                     commentControl
                                     model.creatingComment
+                                    ToggleCommentForm
                                 ]
                             , FormUtils.formBtns
                                 [ Attr.disabled disableSubmitBtn
@@ -381,83 +370,6 @@ view ({ form, serverError, submitting } as model) =
                     ]
                 ]
             ]
-
-
-commentView : Html Msg -> Bool -> Html Msg
-commentView commentControl creatingComment =
-    let
-        ( toggleClass, control, otherStyles ) =
-            if creatingComment then
-                ( "fa fa-minus"
-                , commentControl
-                , [ Css.paddingTop (Css.pct 5)
-                  , Css.color (Css.rgb 216 41 41)
-                  , Css.height (Css.pct 1)
-                  ]
-                )
-            else
-                ( "fa fa-comment", Html.text "", [] )
-
-        styles_ =
-            styles
-                ([ Css.paddingLeft (Css.px 0)
-                 , Css.width (Css.pct 10)
-                 , Css.cursor Css.pointer
-                 ]
-                    ++ otherStyles
-                )
-    in
-        Html.div
-            [ styles
-                [ Css.displayFlex
-                , Css.marginTop (Css.px 10)
-                ]
-            ]
-            [ Html.i
-                [ Attr.class toggleClass
-                , Attr.attribute "aria-hidden" "true"
-                , onClick ToggleCommentForm
-                , styles_
-                ]
-                []
-            , Html.div
-                [ styles [ Css.flex (Css.int 1) ] ]
-                [ control ]
-            ]
-
-
-formControlComment : Model -> ( Html Msg, Bool )
-formControlComment { form, creatingComment } =
-    let
-        commentField =
-            Form.getFieldAsString "comment.text" form
-
-        ( isValid, isInvalid_ ) =
-            FormUtils.controlValidityState commentField
-
-        isInvalid =
-            creatingComment && isInvalid_
-
-        commentFieldValue =
-            Maybe.withDefault
-                ""
-                commentField.value
-    in
-        (FormUtils.formGrp
-            Input.textArea
-            commentField
-            [ Attr.placeholder "Comment"
-            , Attr.name "new-meal-comment"
-            , Attr.id "new-meal-comment"
-            , Attr.value commentFieldValue
-            , Attr.class "autoExpand"
-            ]
-            { errorId = "new-meal-comment-error-id"
-            , errors = Nothing
-            }
-            FormMsg
-        )
-            => isInvalid
 
 
 formControlMeal : Model -> ( Html Msg, Bool )
@@ -566,35 +478,17 @@ styles =
 
 validate : Bool -> Validation String FormValue
 validate creatingComment =
-    let
-        validateText =
-            if creatingComment == True then
-                nonEmpty 3
-            else
-                Validate.succeed ""
-
-        validateComment =
-            Validate.succeed CommentValue
-                |> Validate.andMap
-                    (Validate.field
-                        "text"
-                        (validateText
-                            |> withCustomError
-                                "Comment must be at least 3 characters."
-                        )
-                    )
-    in
-        Validate.succeed FormValue
-            |> Validate.andMap
-                (Validate.field
-                    "meal"
-                    (nonEmpty 3
-                        |> withCustomError
-                            "Meal must be at least 3 characters."
-                    )
+    Validate.succeed FormValue
+        |> Validate.andMap
+            (Validate.field
+                "meal"
+                (nonEmpty 3
+                    |> withCustomError
+                        "Meal must be at least 3 characters."
                 )
-            |> Validate.andMap
-                (Validate.field "comment" validateComment)
+            )
+        |> Validate.andMap
+            (Validate.field "comment" <| CommentEdit.validate creatingComment)
 
 
 

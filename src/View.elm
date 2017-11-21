@@ -7,7 +7,7 @@ import Page exposing (Page)
 import Observation.Detail.App as ObservationDetail
 import Observation.List as ObservationList
 import Observation.New.App as ObservationNew
-import Meal.Detail as MealDetail
+import Meal.Detail.View as MealDetailView
 import Meal.List as MealList
 import Meal.New as MealNew
 import Router
@@ -96,7 +96,7 @@ viewPage page ({ store } as model) =
 
         Page.MealDetail subModel ->
             (Html.map Model.MealDetailMsg <|
-                MealDetail.view subModel
+                MealDetailView.view subModel
             )
                 => "Meal"
 
@@ -169,7 +169,7 @@ navCollapseControl : Html msg
 navCollapseControl =
     Html.button
         [ Attr.class "bkb bkd blg"
-        , Attr.type_ "Html.button"
+        , Attr.type_ "button"
         , Attr.attribute "data-toggle" "collapse"
         , Attr.attribute "data-target" "#nav-toggleable-md"
         ]

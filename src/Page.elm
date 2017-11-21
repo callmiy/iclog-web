@@ -8,7 +8,7 @@ module Page
 import Observation.Detail.App as ObservationDetail
 import Observation.List as ObservationList
 import Observation.New.App as ObservationNew
-import Meal.Detail as MealDetail
+import Meal.Detail.App as MealDetail
 import Meal.List as MealList
 import Meal.New as MealNew
 
