@@ -15,6 +15,10 @@ module Store
         , updatePaginatedMeals
         , addMeal
         , updateMeal
+        , getPaginatedSleeps
+        , updatePaginatedSleeps
+        , addSleep
+        , updateSleep
         )
 
 import Observation.Types
@@ -27,11 +31,8 @@ import Utils
         ( defaultPagination
         , updatePaginationEntriesBy
         )
-import Meal.Types
-    exposing
-        ( PaginatedMeals
-        , Meal
-        )
+import Meal.Types exposing (PaginatedMeals, Meal)
+import Sleep.Types exposing (PaginatedSleeps, Sleep)
 
 
 type alias Flag =
@@ -52,6 +53,7 @@ type Store
         , timeZoneOffset : TimeZoneOffset
         , paginatedObservations : PaginatedObservations
         , paginatedMeals : PaginatedMeals
+        , paginatedSleeps : PaginatedSleeps
         }
 
 
@@ -66,6 +68,10 @@ create { apiUrl, websocketUrl, timeZoneOffset } =
             , pagination = defaultPagination
             }
         , paginatedMeals =
+            { entries = []
+            , pagination = defaultPagination
+            }
+        , paginatedSleeps =
             { entries = []
             , pagination = defaultPagination
             }
@@ -167,3 +173,44 @@ updateMeal ({ id } as meal) store =
             }
     in
         updatePaginatedMeals pmls store
+
+
+getPaginatedSleeps : Store -> PaginatedSleeps
+getPaginatedSleeps (Store { paginatedSleeps }) =
+    paginatedSleeps
+
+
+updatePaginatedSleeps : PaginatedSleeps -> Store -> Store
+updatePaginatedSleeps pobs (Store store) =
+    Store { store | paginatedSleeps = pobs }
+
+
+addSleep : Sleep -> Store -> Store
+addSleep sleep store =
+    let
+        { entries, pagination } =
+            getPaginatedSleeps store
+
+        pml =
+            { entries = sleep :: entries |> List.take pagination.pageSize
+            , pagination = updatePaginationEntriesBy 1 pagination
+            }
+    in
+        updatePaginatedSleeps pml store
+
+
+updateSleep : Sleep -> Store -> Store
+updateSleep ({ id } as sleep) store =
+    let
+        { entries, pagination } =
+            getPaginatedSleeps store
+
+        otherSleeps =
+            List.filter (\m -> m.id /= id) entries
+
+        pmls =
+            { entries = sleep :: otherSleeps
+            , pagination = pagination
+            }
+    in
+        updatePaginatedSleeps pmls store

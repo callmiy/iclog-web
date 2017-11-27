@@ -19,6 +19,10 @@ import Meal.Detail.App as MealDetail
 import Meal.List as MealList
 import Meal.New as MealNew
 import Meal.Channel as MealChannel
+import Sleep.List as SleepList
+import Sleep.New as SleepNew
+import Sleep.Detail.App as SleepDetail
+import Sleep.Channel as SleepChannel
 
 
 type alias Model =
@@ -64,6 +68,10 @@ type Msg
     | SetRoute Route
     | MealChannelMsg MealChannel.ChannelState
     | ToggleShowingMobileNav
+    | SleepListMsg SleepList.Msg
+    | SleepNewMsg SleepNew.Msg
+    | SleepDetailMsg SleepDetail.Msg
+    | SleepChannelMsg SleepChannel.ChannelState
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -165,6 +173,21 @@ update msg ({ pageState, store } as model) =
                     in
                         model ! []
 
+        ( SleepChannelMsg (SleepChannel.Joined result), _ ) ->
+            case result of
+                Ok data ->
+                    { model
+                        | store = Store.updatePaginatedSleeps data store
+                    }
+                        ! []
+
+                Err err ->
+                    let
+                        x =
+                            Debug.log (decodeErrorMsg msg) err
+                    in
+                        model ! []
+
         ( MealChannelMsg (MealChannel.MealCreated result), _ ) ->
             case result of
                 Ok data ->
@@ -249,6 +272,57 @@ update msg ({ pageState, store } as model) =
         ( ToggleShowingMobileNav, _ ) ->
             { model | showingMobileNav = not model.showingMobileNav } ! []
 
+        ( SleepListMsg subMsg, Page.SleepList subModel ) ->
+            let
+                ( ( newSubModel, cmd_ ), externalMsg ) =
+                    SleepList.queryStore store
+                        |> SleepList.update subMsg subModel
+
+                cmd =
+                    Cmd.map SleepListMsg cmd_
+            in
+                case externalMsg of
+                    SleepList.SleepsReceived sleeps ->
+                        { model
+                            | pageState =
+                                Page.Loaded <|
+                                    Page.SleepList newSubModel
+                            , store =
+                                Store.updatePaginatedSleeps
+                                    sleeps
+                                    store
+                        }
+                            ! [ cmd ]
+
+                    SleepList.None ->
+                        model ! [ cmd ]
+
+        ( SleepNewMsg subMsg, Page.SleepNew subModel ) ->
+            let
+                ( newSubModel, cmd ) =
+                    SleepNew.queryStore store
+                        |> SleepNew.update subMsg subModel
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.SleepNew newSubModel
+                }
+                    ! [ Cmd.map SleepNewMsg cmd ]
+
+        ( SleepDetailMsg subMsg, Page.SleepDetail subModel ) ->
+            let
+                ( newSubModel, cmd ) =
+                    SleepDetail.queryStore store
+                        |> SleepDetail.update subMsg subModel
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.SleepDetail newSubModel
+                }
+                    ! [ Cmd.map SleepDetailMsg cmd ]
+
         _ ->
             ( model, Cmd.none )
 
@@ -324,6 +398,39 @@ setRoute ({ store } as model) route =
                             Page.MealNew subModel
                 }
                     ! [ Cmd.map MealNewMsg cmd ]
+
+        Router.SleepList ->
+            { model
+                | pageState =
+                    Page.Loaded <|
+                        Page.SleepList SleepList.init
+            }
+                ! []
+
+        Router.SleepNew ->
+            let
+                ( subModel, cmd ) =
+                    SleepNew.init
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.SleepNew subModel
+                }
+                    ! [ Cmd.map SleepNewMsg cmd ]
+
+        Router.SleepDetail id_ ->
+            let
+                ( subModel, cmd ) =
+                    SleepDetail.queryStore store
+                        |> SleepDetail.init id_
+            in
+                { model
+                    | pageState =
+                        Page.Loaded <|
+                            Page.SleepDetail subModel
+                }
+                    ! [ Cmd.map SleepDetailMsg cmd ]
 
 
 updateObservationList :

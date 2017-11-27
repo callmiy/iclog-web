@@ -16,7 +16,6 @@ import Meal.Types as Types
     exposing
         ( MealWithComments
         , PaginatedMeals
-        , Comment
         , MealId
         , Meal
         , toMealId
@@ -33,17 +32,28 @@ import GraphQL.Request.Builder as Grb
         , Query
         )
 import GraphQL.Request.Builder.Arg as Arg
-import GraphQL.Request.Builder.Variable as Var exposing (VariableSpec, Variable)
+import GraphQL.Request.Builder.Variable as Var
+    exposing
+        ( VariableSpec
+        , Variable
+        )
 import Utils
     exposing
-        ( defaultPaginationParamsVar
-        , PaginationParamsVars
+        ( defaultPaginationVar
+        , PaginationVars
         , graphQlEndpointHelper
         , paginationVarSpec
         , paginationGraphQlResponse
         , graphQlQueryParams
         )
-import Views.CommentEdit exposing (CommentValue)
+import Comment
+    exposing
+        ( Comment
+        , toCommentId
+        , commentVarSpec
+        , CommentValue
+        , commentResponse
+        )
 
 
 channelName : String
@@ -74,7 +84,7 @@ channel : Channel ChannelState
 channel =
     let
         ( payLoad, response ) =
-            listParams defaultPaginationParamsVar
+            listParams defaultPaginationVar
 
         ( _, _, createResponse ) =
             graphQlEndpointHelper
@@ -137,13 +147,10 @@ createMutationName =
 
 commentVar : Variable { r | comment : Maybe CommentValue }
 commentVar =
-    let
-        commentVar_ =
-            Var.object
-                "Comment"
-                [ Var.field "text" .text Var.string ]
-    in
-        Var.required "comment" .comment (Var.nullable commentVar_)
+    Var.required
+        "comment"
+        .comment
+        (Var.nullable commentVarSpec)
 
 
 createRequest : CreateQueryVars -> Request Mutation Meal
@@ -180,7 +187,7 @@ createRequest ({ comment } as queryVars) =
 -- LIST MEALS, PAGINATING RESPONSE
 
 
-list : PaginationParamsVars -> Push ChannelState
+list : PaginationVars -> Push ChannelState
 list vars =
     let
         ( payLoad, response ) =
@@ -193,7 +200,7 @@ list vars =
 
 
 listParams :
-    PaginationParamsVars
+    PaginationVars
     -> ( Je.Value, Jd.Value -> Result String PaginatedMeals )
 listParams vars =
     let
@@ -222,14 +229,14 @@ paginatedMealsResponse =
 
 
 paginatedMealsRequest :
-    PaginationParamsVars
+    PaginationVars
     -> Request Query PaginatedMeals
 paginatedMealsRequest params =
     let
         paginationVar =
             Var.required "pagination" .pagination paginationVarSpec
 
-        queryRoot : Document Query PaginatedMeals PaginationParamsVars
+        queryRoot : Document Query PaginatedMeals PaginationVars
         queryRoot =
             Grb.queryDocument <|
                 Grb.extract <|
@@ -430,11 +437,3 @@ mealWithCommentResponse =
         |> Grb.with (Grb.field "meal" [] Grb.string)
         |> Grb.with (Grb.field "time" [] Utils.dateTimeType)
         |> Grb.with (Grb.field "comments" [] (Grb.list commentResponse))
-
-
-commentResponse : ValueSpec Grb.NonNull Grb.ObjectType Comment vars
-commentResponse =
-    Grb.object Comment
-        |> Grb.with (Grb.field "id" [] (Grb.map Types.toCommentId Grb.id))
-        |> Grb.with (Grb.field "text" [] Grb.string)
-        |> Grb.with (Grb.field "insertedAt" [] Utils.dateTimeType)

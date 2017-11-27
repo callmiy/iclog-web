@@ -6,13 +6,13 @@ module Utils
         , Pagination
         , paginationGraphQlResponse
         , PaginationParams
-        , PaginationParamsVars
+        , PaginationVars
         , paginationVarSpec
-        , makeDefaultPaginationParamsVar
-        , defaultPaginationParamsVar
+        , makeDefaultPaginationVar
+        , defaultPaginationVar
         , defaultPagination
         , nonBreakingSpace
-        , toPaginationParamsVars
+        , toPaginationVars
         , nonEmpty
         , unquoteString
         , unSubmit
@@ -26,6 +26,7 @@ module Utils
         , decodeErrorMsg
         , (<=>)
         , focusEl
+        , getDateNow
         )
 
 import Date exposing (Date)
@@ -116,35 +117,35 @@ type alias PaginationParams =
     }
 
 
-type alias PaginationParamsVars =
+type alias PaginationVars =
     -- This is the object that will be sent as variable to graphql endpoint
     { pagination : PaginationParams
     }
 
 
-defaultPaginationParamsVar : PaginationParamsVars
-defaultPaginationParamsVar =
-    makeDefaultPaginationParamsVar 1 (Just 10)
+defaultPaginationVar : PaginationVars
+defaultPaginationVar =
+    makeDefaultPaginationVar 1 (Just 10)
 
 
-makeDefaultPaginationParamsVar : Int -> Maybe Int -> PaginationParamsVars
-makeDefaultPaginationParamsVar page maybePageSize =
-    PaginationParamsVars <|
+makeDefaultPaginationVar : Int -> Maybe Int -> PaginationVars
+makeDefaultPaginationVar page maybePageSize =
+    PaginationVars <|
         PaginationParams page maybePageSize
 
 
 paginationVarSpec : VariableSpec Var.NonNull PaginationParams
 paginationVarSpec =
     Var.object
-        "PaginationParams"
+        "Pagination"
         [ Var.field "page" .page Var.int
         , Var.field "pageSize" .pageSize (Var.nullable Var.int)
         ]
 
 
-toPaginationParamsVars : Pagination -> PaginationParamsVars
-toPaginationParamsVars { pageNumber, pageSize } =
-    PaginationParamsVars
+toPaginationVars : Pagination -> PaginationVars
+toPaginationVars { pageNumber, pageSize } =
+    PaginationVars
         { page = pageNumber
         , pageSize = Just pageSize
         }
@@ -273,3 +274,8 @@ focusEl : String -> (() -> msg) -> Cmd msg
 focusEl id_ msg =
     Task.attempt (Result.withDefault () >> msg) <|
         Dom.focus id_
+
+
+getDateNow : (Date -> msg) -> Cmd msg
+getDateNow msg =
+    Task.perform msg Date.now

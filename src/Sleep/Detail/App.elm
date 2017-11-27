@@ -1,26 +1,26 @@
-module Meal.Detail.App
+module Sleep.Detail.App
     exposing
         ( Model
         , Msg(..)
         , Viewing(..)
         , FormValue
         , update
-        , subscriptions
         , init
         , queryStore
         , commentControlId
+        , emptyForm
         )
 
-import Meal.Types
+import Sleep.Types
     exposing
-        ( MealId
-        , fromMealId
-        , MealWithComments
+        ( SleepId
+        , fromSleepId
+        , SleepWithComments
         )
 import Store exposing (Store, TimeZoneOffset)
 import Date exposing (Date)
 import DateTimePicker
-import Meal.Channel as Channel exposing (ChannelState)
+import Sleep.Channel as Channel exposing (ChannelState)
 import Form exposing (Form, FieldState)
 import Form.Field as Field exposing (Field)
 import Form.Validate as Validate exposing (Validation, withCustomError)
@@ -37,29 +37,34 @@ import Comment exposing (Comment, CommentValue)
 
 
 type alias Model =
-    { meal : Maybe MealWithComments
+    { sleep : Maybe SleepWithComments
     , viewing : Viewing
     , serverError : Maybe String
     , submitting : Bool
-    , selectedDate : Maybe Date
-    , datePickerState : DateTimePicker.State
+    , start : Maybe Date
+    , end : Maybe Date
+    , datePickerStart : DateTimePicker.State
+    , datePickerEnd : DateTimePicker.State
     , editSuccess : Bool
-    , form : Form String FormValue
+    , editForm : Maybe (Form String FormValue)
     , creatingComment : Bool
     , commentForm : Maybe (Form String CommentValue)
     }
 
 
 type alias FormValue =
-    { meal : String
-    , comment : CommentValue
+    { comment : CommentValue
     }
 
 
-initialFields : String -> List ( String, Field )
-initialFields meal =
-    [ ( "meal", Field.string meal )
-    ]
+initialFields : List ( String, Field )
+initialFields =
+    []
+
+
+emptyForm : Form String FormValue
+emptyForm =
+    Form.initial initialFields <| validate False
 
 
 init : String -> QueryStore -> ( Model, Cmd Msg )
@@ -73,20 +78,25 @@ init id_ { websocketUrl } =
                 |> Phoenix.push url
                 |> Cmd.map ChannelMsg
     in
-        { meal = Nothing
+        { sleep = Nothing
         , viewing = ViewingDetail
         , serverError = Nothing
         , submitting = False
-        , selectedDate = Nothing
-        , datePickerState = DateTimePicker.initialState
+        , start = Nothing
+        , end = Nothing
+        , datePickerStart = DateTimePicker.initialState
+        , datePickerEnd = DateTimePicker.initialState
         , editSuccess = False
         , creatingComment = False
         , commentForm = Nothing
-        , form = Form.initial (initialFields "") <| validate False
+        , editForm = Nothing
         }
             ! [ cmd
               , DateTimePicker.initialCmd
-                    DatePickerChanged
+                    DatePickerChangedStart
+                    DateTimePicker.initialState
+              , DateTimePicker.initialCmd
+                    DatePickerChangedEnd
                     DateTimePicker.initialState
               ]
 
@@ -95,11 +105,12 @@ type Msg
     = ChannelMsg ChannelState
     | ChangeView Viewing
     | FormMsg Form.Msg
-    | DatePickerChanged DateTimePicker.State (Maybe Date)
+    | DatePickerChangedStart DateTimePicker.State (Maybe Date)
+    | DatePickerChangedEnd DateTimePicker.State (Maybe Date)
     | ResetForm
-    | SubmitForm MealWithComments
+    | SubmitForm SleepWithComments
     | DismissEditSuccessInfo
-    | ToggleCommentForm
+    | ToggleEditForm
     | NoOp ()
     | ToggleAddComment
     | CommentFormMsg Form.Msg
@@ -131,8 +142,8 @@ update msg model store =
             case channelState of
                 Channel.GetSucceeds result ->
                     case result of
-                        Ok meal_ ->
-                            mealReceived meal_ model
+                        Ok sleep_ ->
+                            sleepReceived sleep_ model
                                 ! []
 
                         Err err ->
@@ -144,8 +155,8 @@ update msg model store =
 
                 Channel.UpdateSucceeds result ->
                     case result of
-                        Ok meal_ ->
-                            (mealReceived meal_ model
+                        Ok sleep_ ->
+                            (sleepReceived sleep_ model
                                 |> Utils.unSubmit
                                 |> changeView ViewingDetail
                                 |> editSuccess
@@ -180,60 +191,46 @@ update msg model store =
                 _ ->
                     model ! []
 
-        ChangeView viewing ->
-            changeView viewing model
-                ! []
-
-        FormMsg formMsg ->
-            { model
-                | form =
-                    Form.update (validate model.creatingComment) formMsg model.form
-                , serverError = Nothing
-            }
-                => Cmd.none
-
-        DatePickerChanged datePickerState maybeDate ->
-            { model
-                | datePickerState = datePickerState
-                , selectedDate = maybeDate
-            }
-                ! []
-
-        ResetForm ->
-            resetForm model ! []
-
         SubmitForm { id } ->
             let
                 form_ =
-                    Form.update (validate model.creatingComment) Form.Submit model.form
+                    Form.update
+                        (validate model.creatingComment)
+                        Form.Submit
+                        (Maybe.withDefault emptyForm model.editForm)
 
                 model_ =
-                    { model | form = form_ }
+                    { model | editForm = Just form_ }
             in
                 case ( Form.getOutput form_, store.websocketUrl ) of
-                    ( Just { meal, comment }, Just websocketUrl ) ->
+                    ( Just { comment }, Just websocketUrl ) ->
                         let
                             tz =
                                 Store.toTimeZoneVal
                                     store.tzOffset
 
-                            time =
+                            start =
                                 Maybe.map
                                     (formatDateISOWithTimeZone tz)
-                                    model.selectedDate
+                                    model.start
+
+                            end =
+                                Maybe.map
+                                    (formatDateISOWithTimeZone tz)
+                                    model.end
 
                             params =
                                 if model.creatingComment then
                                     { id = id
-                                    , meal = Just meal
+                                    , start = start
                                     , comment = Just comment
-                                    , time = time
+                                    , end = end
                                     }
                                 else
                                     { id = id
-                                    , meal = Just meal
+                                    , start = start
                                     , comment = Nothing
-                                    , time = time
+                                    , end = end
                                     }
 
                             cmd =
@@ -246,10 +243,51 @@ update msg model store =
                     _ ->
                         model_ ! []
 
+        ChangeView viewing ->
+            changeView viewing model
+                ! []
+
+        FormMsg formMsg ->
+            { model
+                | editForm =
+                    Maybe.andThen
+                        (\form_ ->
+                            Just <|
+                                Form.update
+                                    (validate model.creatingComment)
+                                    formMsg
+                                    form_
+                        )
+                        model.editForm
+                , serverError = Nothing
+            }
+                => Cmd.none
+
+        DatePickerChangedStart datePickerState maybeDate ->
+            (compareDates
+                { model
+                    | datePickerStart = datePickerState
+                    , start = maybeDate
+                }
+            )
+                ! []
+
+        DatePickerChangedEnd datePickerState maybeDate ->
+            (compareDates
+                { model
+                    | datePickerEnd = datePickerState
+                    , end = maybeDate
+                }
+            )
+                ! []
+
+        ResetForm ->
+            resetForm model ! []
+
         DismissEditSuccessInfo ->
             { model | editSuccess = False } ! []
 
-        ToggleCommentForm ->
+        ToggleEditForm ->
             let
                 ( model_, cmd ) =
                     Comment.toggleCommentForm
@@ -257,8 +295,14 @@ update msg model store =
                         revalidateForm
                         commentControlId
                         NoOp
+
+                form_ =
+                    if model_.creatingComment then
+                        Just emptyForm
+                    else
+                        Nothing
             in
-                model_ ! [ cmd ]
+                { model_ | editForm = form_ } ! [ cmd ]
 
         ToggleAddComment ->
             let
@@ -291,12 +335,12 @@ update msg model store =
                                 Form.Submit
                                 commentForm
                     in
-                        case ( Form.getOutput form_, model.meal, store.websocketUrl ) of
+                        case ( Form.getOutput form_, model.sleep, store.websocketUrl ) of
                             ( Just { text }, Just { id }, Just websocketUrl ) ->
                                 let
                                     params =
                                         { text = text
-                                        , mealId = id
+                                        , sleepId = id
                                         }
 
                                     cmd =
@@ -312,15 +356,21 @@ update msg model store =
                 Nothing ->
                     model ! []
 
-        NoOp _ ->
+        _ ->
             model ! []
 
 
-mealReceived : MealWithComments -> Model -> Model
-mealReceived meal_ model =
+commentControlId : String
+commentControlId =
+    "detail-sleep-comment"
+
+
+sleepReceived : SleepWithComments -> Model -> Model
+sleepReceived sleep_ model =
     { model
-        | meal = Just meal_
-        , selectedDate = Just meal_.time
+        | sleep = Just sleep_
+        , start = Just sleep_.start
+        , end = Just sleep_.end
     }
 
 
@@ -341,42 +391,25 @@ changeView viewing model =
         }
 
 
-revalidateForm : Form.Msg -> Model -> Model
-revalidateForm formMsg model =
-    { model
-        | form =
-            Form.update
-                (validate model.creatingComment)
-                formMsg
-                model.form
-        , serverError = Nothing
-    }
-        |> resetCreatingComment
-
-
 resetForm : Model -> Model
-resetForm ({ meal, form } as model) =
-    case meal of
-        Just ({ time } as meal_) ->
-            { model
-                | form =
-                    Form.update
-                        (validate False)
-                        (Form.Reset <| initialFields meal_.meal)
-                        form
-                , selectedDate = Just time
-                , editSuccess = False
-            }
-                |> resetCreatingComment
-                |> Utils.unSubmit
+resetForm ({ sleep, editForm } as model) =
+    let
+        model_ =
+            case sleep of
+                Just { start, end } ->
+                    { model
+                        | start = Just start
+                        , end = Just end
+                        , editSuccess = False
+                        , serverError = Nothing
+                    }
+                        |> resetCreatingComment
+                        |> Utils.unSubmit
 
-        Nothing ->
-            resetCreatingComment model |> Utils.unSubmit
-
-
-editSuccess : Model -> Model
-editSuccess model =
-    { model | editSuccess = True }
+                _ ->
+                    model
+    in
+        resetCreatingComment model_ |> Utils.unSubmit
 
 
 resetCreatingComment : Model -> Model
@@ -388,24 +421,16 @@ validate : Bool -> Validation String FormValue
 validate creatingComment =
     Validate.succeed FormValue
         |> Validate.andMap
-            (Validate.field
-                "meal"
-                (nonEmpty 3
-                    |> withCustomError
-                        "Meal must be at least 3 characters."
-                )
-            )
-        |> Validate.andMap
             (Validate.field "comment" <| Comment.validate creatingComment)
 
 
 addComment : Comment -> Model -> Model
-addComment comment ({ meal } as model) =
+addComment comment ({ sleep } as model) =
     { model
-        | meal =
+        | sleep =
             Maybe.andThen
                 (\m -> Just <| { m | comments = comment :: m.comments })
-                meal
+                sleep
     }
 
 
@@ -414,15 +439,43 @@ nullifyCommentForm model =
     { model | commentForm = Nothing }
 
 
-commentControlId : String
-commentControlId =
-    "edit-meal-comment"
+editSuccess : Model -> Model
+editSuccess model =
+    { model | editSuccess = True }
 
 
+revalidateForm : Form.Msg -> Model -> Model
+revalidateForm formMsg model =
+    { model
+        | editForm =
+            Maybe.andThen
+                (\form_ ->
+                    Just <|
+                        Form.update
+                            (validate model.creatingComment)
+                            formMsg
+                            form_
+                )
+                model.editForm
+        , serverError = Nothing
+    }
+        |> resetCreatingComment
 
--- SUBSCRIPTIONS
 
+compareDates : Model -> Model
+compareDates ({ start, end } as model) =
+    case ( start, end ) of
+        ( Just start_, Just end_ ) ->
+            let
+                serverError =
+                    case compare (Date.toTime start_) (Date.toTime end_) of
+                        GT ->
+                            Just "End time must be after start time!"
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+                        _ ->
+                            Nothing
+            in
+                { model | serverError = serverError }
+
+        _ ->
+            model

@@ -19,8 +19,8 @@ import Utils as GUtils
     exposing
         ( Pagination
         , (=>)
-        , toPaginationParamsVars
-        , defaultPaginationParamsVar
+        , toPaginationVars
+        , defaultPaginationVar
         , defaultPagination
         )
 import Store exposing (Store)
@@ -74,7 +74,7 @@ update msg model { websocketUrl } =
         Paginate pagination ->
             let
                 cmd =
-                    toPaginationParamsVars pagination
+                    toPaginationVars pagination
                         |> Channel.listObservations
                         |> Phoenix.push (Maybe.withDefault "" websocketUrl)
                         |> Cmd.map ChannelMsg

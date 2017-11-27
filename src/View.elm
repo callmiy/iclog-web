@@ -14,6 +14,9 @@ import Meal.New as MealNew
 import Router exposing (Route)
 import Utils exposing ((=>))
 import Css
+import Sleep.List as SleepList
+import Sleep.New as SleepNew
+import Sleep.Detail.View as SleepDetailView
 
 
 view : Model -> Html Msg
@@ -101,6 +104,21 @@ viewPage page ({ store } as model) =
             )
                 => "Meal"
 
+        Page.SleepList subModel ->
+            (Html.map Model.SleepListMsg <|
+                SleepList.view subModel (SleepList.queryStore store)
+            )
+                => "Sleep"
+
+        Page.SleepNew subModel ->
+            (Html.map Model.SleepNewMsg <| SleepNew.view subModel) => "Sleep"
+
+        Page.SleepDetail subModel ->
+            (Html.map Model.SleepDetailMsg <|
+                SleepDetailView.view subModel
+            )
+                => "Sleep"
+
 
 navigation : Model -> Html Msg
 navigation model =
@@ -141,6 +159,9 @@ navLinks route =
         observationActive =
             String.startsWith "Observation" stringRoute
 
+        sleepActive =
+            String.startsWith "Sleep" stringRoute
+
         link_ route_ active text_ =
             Html.li
                 [ Attr.class "lp" ]
@@ -158,6 +179,7 @@ navLinks route =
                 [ Html.text "Observables" ]
             , link_ Router.ObservationList observationActive "Observation"
             , link_ Router.MealList mealActive "Meal"
+            , link_ Router.SleepList sleepActive "Sleep"
             ]
 
 

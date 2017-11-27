@@ -1,4 +1,4 @@
-module Meal.Detail.View exposing (view)
+module Sleep.Detail.View exposing (view)
 
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
@@ -6,56 +6,62 @@ import Html.Events exposing (onClick, onSubmit)
 import Views.Nav exposing (nav)
 import Router
 import Views.FormUtils as FormUtils
-import Form.Input as Input exposing (Input)
 import Css
 import Views.CreationSuccessAlert as CreationSuccessAlert
-import Meal.Detail.App
+import Sleep.Detail.App
     exposing
         ( Model
         , Msg(..)
         , Viewing(..)
         , FormValue
         , commentControlId
+        , emptyForm
         )
-import Meal.Types
+import Sleep.Types
     exposing
-        ( MealWithComments
-        , fromMealId
+        ( SleepWithComments
+        , fromSleepId
+        , sleepDuration
         )
-import Utils exposing (formatDateForForm, (=>))
+import Utils
+    exposing
+        ( formatDateForForm
+        , (=>)
+        , nonBreakingSpace
+        )
 import Form exposing (Form)
 import Views.Util exposing (cardTitle, formControlDateTimePicker)
 import Comment exposing (Comment, CommentValue, commentsView)
 
 
 view : Model -> Html Msg
-view ({ meal, viewing } as model) =
+view ({ sleep, viewing } as model) =
     let
         mainView =
-            case meal of
+            case sleep of
                 Nothing ->
                     Html.text ""
 
-                Just meal_ ->
+                Just sleep_ ->
                     case viewing of
                         ViewingDetail ->
-                            viewDetail meal_ model
+                            viewDetail sleep_ model
 
                         ViewingEdit ->
-                            viewEdit meal_ model
+                            viewEdit sleep_ model
     in
-        Html.div [ Attr.id "meal-detail" ]
-            [ nav Nothing Router.MealList Router.MealNew "meal"
+        Html.div [ Attr.id "sleep-detail" ]
+            [ nav Nothing Router.SleepList Router.SleepNew "sleep"
             , mainView
             ]
 
 
-viewDetail : MealWithComments -> Model -> Html Msg
-viewDetail ({ meal, time, comments } as meal_) model =
+viewDetail : SleepWithComments -> Model -> Html Msg
+viewDetail ({ start, end, comments } as sleep_) model =
     let
         alertId =
             if model.editSuccess == True then
-                Just <| fromMealId meal_.id
+                Just <| fromSleepId sleep_.id
             else
                 Nothing
     in
@@ -67,12 +73,32 @@ viewDetail ({ meal, time, comments } as meal_) model =
                 , CreationSuccessAlert.view
                     { id = alertId
                     , route = Nothing
-                    , label = "meal"
+                    , label = "sleep Details"
                     , dismissMsg = Just DismissEditSuccessInfo
                     }
                 , Html.p
                     [ Attr.class "card-text" ]
-                    [ Html.text meal ]
+                    [ Html.div
+                        []
+                        [ Html.text <|
+                            "From: "
+                                ++ (List.repeat 6 nonBreakingSpace |> String.join "")
+                                ++ (formatDateForForm start)
+                        ]
+                    , Html.div
+                        []
+                        [ Html.text <|
+                            "To: "
+                                ++ (List.repeat 11 nonBreakingSpace |> String.join "")
+                                ++ (formatDateForForm end)
+                        ]
+                    , Html.div
+                        []
+                        [ Html.text <|
+                            "Duration: "
+                                ++ (sleepDuration start end)
+                        ]
+                    ]
                 , Html.div
                     [ Attr.class "card-link"
                     , styles
@@ -88,7 +114,7 @@ viewDetail ({ meal, time, comments } as meal_) model =
                             , Css.marginRight (Css.px 5)
                             ]
                         , onClick <| ChangeView ViewingEdit
-                        , Attr.id "detail-meal-show-edit-display"
+                        , Attr.id "detail-sleep-show-edit-display"
                         ]
                         []
                     , case model.commentForm of
@@ -98,16 +124,13 @@ viewDetail ({ meal, time, comments } as meal_) model =
                         Nothing ->
                             Comment.addCommentToggle
                                 ToggleAddComment
-                                "detail-meal-add-comment-toggle"
+                                "detail-sleep-add-comment-toggle"
                     ]
                 , Html.div
                     [ styles [ Css.marginTop (Css.px 10) ] ]
                     [ viewCommentForm model.commentForm ]
                 , commentsView comments
                 ]
-            , Html.div
-                [ Attr.class "card-footer text-muted" ]
-                [ Html.text <| formatDateForForm time ]
             ]
 
 
@@ -123,7 +146,7 @@ viewCommentForm maybeForm =
                     Comment.formControl3
                         "text"
                         form_
-                        "meal-add-comment"
+                        "sleep-add-comment"
                         CommentFormMsg
 
                 actionStyles =
@@ -135,7 +158,7 @@ viewCommentForm maybeForm =
                         Html.i
                             [ Attr.class "fa fa-check"
                             , Attr.attribute "aria-hidden" "true"
-                            , Attr.id "meal-detail-add-comment-submit"
+                            , Attr.id "sleep-detail-add-comment-submit"
                             , onClick SubmitCommentForm
                             , styles
                                 (actionStyles
@@ -163,7 +186,7 @@ viewCommentForm maybeForm =
                         [ Html.i
                             [ Attr.class "fa fa-ban"
                             , Attr.attribute "aria-hidden" "true"
-                            , Attr.id "meal-detail-add-comment-dismiss"
+                            , Attr.id "sleep-detail-add-comment-dismiss"
                             , styles
                                 (actionStyles
                                     ++ [ Css.padding (Css.px 0)
@@ -182,22 +205,29 @@ viewCommentForm maybeForm =
                     ]
 
 
-viewEdit : MealWithComments -> Model -> Html Msg
-viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
+viewEdit : SleepWithComments -> Model -> Html Msg
+viewEdit ({ start, end, comments } as sleep_) ({ viewing, serverError } as model) =
     let
-        ( mealControl, mealInvalid ) =
-            formControlMeal meal model
-
-        ( timeControl, _, timeInvalid, _ ) =
+        ( startControl, _, startInvalid, _ ) =
             formControlDateTimePicker
-                model.selectedDate
-                DatePickerChanged
-                model.datePickerState
-                "detail-meal-edit-time"
+                model.start
+                DatePickerChangedStart
+                model.datePickerStart
+                "detail-sleep-edit-start"
+
+        ( endControl, _, endInvalid, _ ) =
+            formControlDateTimePicker
+                model.end
+                DatePickerChangedEnd
+                model.datePickerEnd
+                "detail-sleep-edit-end"
+
+        form_ =
+            (Maybe.withDefault emptyForm model.editForm)
 
         ( commentControl, commentInvalid, commentValid ) =
             Comment.formControl4
-                model.form
+                form_
                 commentControlId
                 FormMsg
                 model.creatingComment
@@ -210,27 +240,24 @@ viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
                 False ->
                     "Submit"
 
-        mealChanged =
-            case mealFromForm model.form of
-                Nothing ->
-                    True
+        startChanged =
+            Maybe.map formatDateForForm model.start
+                /= (Just <| formatDateForForm start)
 
-                Just aMeal ->
-                    meal /= aMeal
-
-        timeChanged =
-            Maybe.map formatDateForForm model.selectedDate
-                /= (Just <| formatDateForForm time)
+        endChanged =
+            Maybe.map formatDateForForm model.end
+                /= (Just <| formatDateForForm end)
 
         disableSubmitBtn =
             (model.submitting == True)
-                || timeInvalid
-                || mealInvalid
+                || startInvalid
+                || endInvalid
                 || commentInvalid
-                || ([] /= Form.getErrors model.form)
-                || (mealChanged
+                || (serverError /= Nothing)
+                || ([] /= Form.getErrors form_)
+                || (startChanged
                         == False
-                        && timeChanged
+                        && endChanged
                         == False
                         && commentValid
                         == False
@@ -248,12 +275,12 @@ viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
                 [ Html.div
                     [ Attr.class "card" ]
                     [ Html.form
-                        [ Attr.class "card-body edit-meal-form"
+                        [ Attr.class "card-body edit-sleep-form"
                         , Attr.novalidate True
-                        , Attr.id "edit-meal-form"
-                        , onSubmit <| SubmitForm meal_
+                        , Attr.id "edit-sleep-form"
+                        , onSubmit <| SubmitForm sleep_
                         ]
-                        [ cardTitle "Edit meal"
+                        [ cardTitle "Edit"
                         , Html.div
                             [ Attr.class "card-link"
                             , styles
@@ -270,7 +297,7 @@ viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
                                     [ Css.maxWidth (Css.px 0)
                                     , Css.marginRight (Css.px 8)
                                     ]
-                                , Attr.id "detail-meal-show-detail-display"
+                                , Attr.id "detail-sleep-show-detail-display"
                                 ]
                                 []
                             , (if model.creatingComment == True then
@@ -279,7 +306,7 @@ viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
                                 Html.i
                                     [ Attr.class "fa fa-comment"
                                     , styles [ Css.cursor Css.pointer ]
-                                    , onClick ToggleCommentForm
+                                    , onClick ToggleEditForm
                                     , styles
                                         [ Css.maxWidth (Css.px 0)
                                         , Css.marginRight (Css.px 10)
@@ -291,24 +318,27 @@ viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
                               )
                             ]
                         , Html.div
-                            [ Attr.class "edit-meal-form-controls"
-                            , Attr.id "edit-meal-form-controls"
+                            [ Attr.class "edit-sleep-form-controls"
+                            , Attr.id "edit-sleep-form-controls"
                             , styles [ Css.marginBottom (Css.rem 1) ]
                             ]
-                            [ mealControl
-                            , timeControl
+                            [ FormUtils.textualErrorBox serverError
+                            , startControl
+                            , Html.div
+                                [ styles [ Css.marginTop (Css.rem 1) ] ]
+                                [ endControl ]
                             , Comment.view
                                 commentControl
                                 model.creatingComment
-                                ToggleCommentForm
+                                ToggleEditForm
                             ]
                         , FormUtils.formBtns
                             [ Attr.disabled disableSubmitBtn
-                            , Attr.name "edit-meal-submit-btn"
-                            , Attr.id "edit-meal-submit-btn"
+                            , Attr.name "edit-sleep-submit-btn"
+                            , Attr.id "edit-sleep-submit-btn"
                             ]
                             [ Attr.disabled disableResetBtn
-                            , Attr.name "edit-meal-reset-btn"
+                            , Attr.name "edit-sleep-reset-btn"
                             ]
                             label_
                             ResetForm
@@ -316,42 +346,6 @@ viewEdit ({ meal, time, comments } as meal_) ({ viewing } as model) =
                     ]
                 ]
             ]
-
-
-formControlMeal : String -> Model -> ( Html Msg, Bool )
-formControlMeal meal { form } =
-    let
-        mealField =
-            Form.getFieldAsString "meal" form
-
-        ( isValid, isInvalid ) =
-            FormUtils.controlValidityState mealField
-
-        mealFieldValue =
-            Maybe.withDefault
-                meal
-                mealField.value
-    in
-        (FormUtils.formGrp
-            Input.textArea
-            mealField
-            [ Attr.placeholder "Meal"
-            , Attr.name "edit-meal-input"
-            , Attr.id "edit-meal-input"
-            , Attr.value mealFieldValue
-            , Attr.class "autoExpand"
-            ]
-            { errorId = "edit-meal-input-error-id"
-            , errors = Nothing
-            }
-            FormMsg
-        )
-            => isInvalid
-
-
-mealFromForm : Form String FormValue -> Maybe String
-mealFromForm form_ =
-    Form.getOutput form_ |> Maybe.map .meal
 
 
 styles : List Css.Style -> Attribute msg

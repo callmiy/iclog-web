@@ -13,6 +13,7 @@ import Observation.Channel as ObservationChannel
 import Navigation
 import Router
 import Meal.Channel as MealChannel
+import Sleep.Channel as SleepChannel
 
 
 subs : Model -> Sub Msg
@@ -68,6 +69,9 @@ phoenixSubscription ({ store, pageState } as model) =
                     , Channel.map
                         Model.MealChannelMsg
                         MealChannel.channel
+                    , Channel.map
+                        Model.SleepChannelMsg
+                        SleepChannel.channel
                     ]
 
         Nothing ->

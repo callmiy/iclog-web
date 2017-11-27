@@ -11,6 +11,9 @@ import Observation.New.App as ObservationNew
 import Meal.Detail.App as MealDetail
 import Meal.List as MealList
 import Meal.New as MealNew
+import Sleep.List as SleepList
+import Sleep.New as SleepNew
+import Sleep.Detail.App as SleepDetail
 
 
 type Page
@@ -21,6 +24,9 @@ type Page
     | MealDetail MealDetail.Model
     | MealList MealList.Model
     | MealNew MealNew.Model
+    | SleepList SleepList.Model
+    | SleepNew SleepNew.Model
+    | SleepDetail SleepDetail.Model
 
 
 type PageState

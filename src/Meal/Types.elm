@@ -3,12 +3,9 @@ module Meal.Types
         ( MealWithComments
         , MealId
         , PaginatedMeals
-        , Comment
         , Meal
         , fromMealId
         , toMealId
-        , fromCommentId
-        , toCommentId
         , mealDecoder
         )
 
@@ -16,6 +13,7 @@ import Date exposing (Date)
 import Utils exposing (Pagination)
 import Json.Decode as Jd exposing (Decoder)
 import Json.Decode.Extra as Jde exposing ((|:))
+import Comment exposing (Comment)
 
 
 type alias MealWithComments =
@@ -43,17 +41,6 @@ type MealId
     = MealId String
 
 
-type alias Comment =
-    { id : CommentId
-    , text : String
-    , insertedAt : Date
-    }
-
-
-type CommentId
-    = CommentId String
-
-
 fromMealId : MealId -> String
 fromMealId (MealId id_) =
     id_
@@ -62,16 +49,6 @@ fromMealId (MealId id_) =
 toMealId : String -> MealId
 toMealId id_ =
     MealId id_
-
-
-fromCommentId : CommentId -> String
-fromCommentId (CommentId id_) =
-    id_
-
-
-toCommentId : String -> CommentId
-toCommentId id_ =
-    CommentId id_
 
 
 mealDecoder : Decoder Meal

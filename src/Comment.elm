@@ -1,12 +1,20 @@
-module Views.CommentEdit
+module Comment
     exposing
-        ( CommentValue
+        ( Comment
+        , CommentValue
+        , fromCommentId
+        , toCommentId
+        , commentVarSpec
         , view
         , formControl3
         , formControl4
         , validate
         , toggleCommentForm
         , initForm
+        , addCommentToggle
+        , commentResponse
+        , commentsView
+        , commentView
         )
 
 import Html exposing (Html, Attribute)
@@ -18,11 +26,57 @@ import Form exposing (Form)
 import Form.Input as Input
 import Form.Field as Field
 import Form.Validate as Validate exposing (Validation, withCustomError)
-import Utils exposing ((=>), nonEmpty, focusEl, (<=>))
+import Utils
+    exposing
+        ( (=>)
+        , nonEmpty
+        , focusEl
+        , (<=>)
+        , formatDateForForm
+        )
+import Date exposing (Date)
+import GraphQL.Request.Builder.Variable as Var exposing (VariableSpec)
+import GraphQL.Request.Builder as Grb exposing (ValueSpec)
+
+
+type alias Comment =
+    { id : CommentId
+    , text : String
+    , insertedAt : Date
+    }
+
+
+type CommentId
+    = CommentId String
+
+
+toCommentId : String -> CommentId
+toCommentId id_ =
+    CommentId id_
+
+
+fromCommentId : CommentId -> String
+fromCommentId (CommentId id_) =
+    id_
 
 
 type alias CommentValue =
     { text : String }
+
+
+commentVarSpec : VariableSpec Var.NonNull CommentValue
+commentVarSpec =
+    Var.object
+        "Comment"
+        [ Var.field "text" .text Var.string ]
+
+
+commentResponse : ValueSpec Grb.NonNull Grb.ObjectType Comment vars
+commentResponse =
+    Grb.object Comment
+        |> Grb.with (Grb.field "id" [] (Grb.map toCommentId Grb.id))
+        |> Grb.with (Grb.field "text" [] Grb.string)
+        |> Grb.with (Grb.field "insertedAt" [] Utils.dateTimeType)
 
 
 view : Html msg -> Bool -> msg -> Html msg
@@ -166,6 +220,85 @@ toggleCommentForm model revalidateForm commentId msg =
 initForm : Form String CommentValue
 initForm =
     Form.initial [] <| validate False
+
+
+addCommentToggle : msg -> String -> Html msg
+addCommentToggle msg id_ =
+    Html.i
+        [ Attr.class "fa fa-comment"
+        , styles
+            [ Css.cursor Css.pointer
+            , Css.maxWidth (Css.px 10)
+            , Css.marginRight (Css.rem 1)
+            ]
+        , onClick msg
+        , Attr.id id_
+        ]
+        []
+
+
+commentsView : List Comment -> Html msg
+commentsView comments =
+    case comments of
+        [] ->
+            Html.text ""
+
+        comments_ ->
+            let
+                sortWith_ a b =
+                    case compare (Date.toTime a.insertedAt) (Date.toTime b.insertedAt) of
+                        GT ->
+                            LT
+
+                        LT ->
+                            GT
+
+                        EQ ->
+                            EQ
+            in
+                Html.ul
+                    [ Attr.class "list-group list-group-flush"
+                    , styles
+                        [ Css.marginTop (Css.px 10)
+                        , Css.border3
+                            (Css.px 1)
+                            (Css.solid)
+                            (Css.rgb 119 119 119)
+                        , Css.padding (Css.rem 0.1)
+                        ]
+                    ]
+                <|
+                    List.map commentView (List.sortWith sortWith_ comments_)
+
+
+commentView : Comment -> Html msg
+commentView { text, insertedAt } =
+    Html.li
+        [ Attr.class "card viewing-comment"
+        , styles [ Css.borderRadius (Css.px 0) ]
+        ]
+        [ Html.div
+            [ Attr.class "card-body"
+            , styles [ Css.padding2 (Css.rem 0.1) (Css.rem 0.3) ]
+            ]
+            [ Html.p
+                [ Attr.class "card-text" ]
+                [ Html.text text ]
+            ]
+        , Html.div
+            [ Attr.class "card-footer text-muted"
+            , styles
+                [ Css.fontSize (Css.rem 0.92)
+                , Css.padding2 (Css.px 0) (Css.px 5)
+                , Css.displayFlex
+                , Css.flexDirection Css.rowReverse
+                ]
+            ]
+            [ Html.div
+                []
+                [ Html.text <| formatDateForForm insertedAt ]
+            ]
+        ]
 
 
 styles : List Css.Style -> Attribute msg

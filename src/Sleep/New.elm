@@ -1,4 +1,4 @@
-module Meal.New
+module Sleep.New
     exposing
         ( Model
         , Msg
@@ -14,7 +14,6 @@ import Html.Attributes as Attr
 import Html.Events exposing (onSubmit, onClick)
 import Form exposing (Form, FieldState)
 import Form.Field as Field exposing (Field)
-import Form.Input as Input exposing (Input)
 import Form.Validate as Validate exposing (Validation, withCustomError)
 import Date exposing (Date)
 import Utils
@@ -30,23 +29,17 @@ import Utils
         , getDateNow
         )
 import DateTimePicker
-import DateTimePicker.Config as DateTimePickerConfig
-    exposing
-        ( DatePickerConfig
-        , defaultDateTimePickerConfig
-        , TimePickerConfig
-        )
-import Meal.Types exposing (MealId, fromMealId)
+import Sleep.Types exposing (SleepId, fromSleepId)
 import Store exposing (Store, TimeZoneOffset)
 import Css
 import Views.Nav exposing (nav)
 import Router
 import Views.FormUtils as FormUtils
-import Meal.Channel as Channel exposing (ChannelState)
+import Sleep.Channel as Channel exposing (ChannelState)
 import Phoenix
 import Views.CreationSuccessAlert as CreationSuccessAlert
 import Comment exposing (CommentValue)
-import Views.Util exposing (cardTitle)
+import Views.Util exposing (cardTitle, formControlDateTimePicker)
 
 
 type alias Model =
@@ -54,15 +47,14 @@ type alias Model =
     , serverError : Maybe String
     , submitting : Bool
     , creatingComment : Bool
-    , selectedDate : Maybe Date
+    , startDate : Maybe Date
     , datePickerState : DateTimePicker.State
-    , newMeal : Maybe MealId
+    , newSleep : Maybe SleepId
     }
 
 
 type alias FormValue =
-    { meal : String
-    , comment : CommentValue
+    { comment : CommentValue
     }
 
 
@@ -77,8 +69,8 @@ defaults =
     , serverError = Nothing
     , submitting = False
     , creatingComment = False
-    , newMeal = Nothing
-    , selectedDate = Nothing
+    , newSleep = Nothing
+    , startDate = Nothing
     , datePickerState = DateTimePicker.initialState
     }
 
@@ -86,7 +78,7 @@ defaults =
 init : ( Model, Cmd Msg )
 init =
     defaults
-        ! [ focusEl "new-meal-input" NoOp
+        ! [ focusEl "new-sleep-input" NoOp
           , DateTimePicker.initialCmd
                 DatePickerInitialMsg
                 DateTimePicker.initialState
@@ -124,7 +116,7 @@ update msg ({ form } as model) store =
     case msg of
         Today today ->
             { model
-                | selectedDate = Just today
+                | startDate = Just today
             }
                 ! []
 
@@ -141,7 +133,7 @@ update msg ({ form } as model) store =
         DatePickerChanged datePickerState maybeDate ->
             { model
                 | datePickerState = datePickerState
-                , selectedDate = maybeDate
+                , startDate = maybeDate
             }
                 ! []
 
@@ -159,58 +151,12 @@ update msg ({ form } as model) store =
         ResetForm ->
             resetForm model ! [ getDateNow Today ]
 
-        SubmitForm ->
-            let
-                newForm =
-                    Form.update
-                        (validate model.creatingComment)
-                        Form.Submit
-                        form
-
-                newModel =
-                    { model | form = newForm }
-            in
-                case ( Form.getOutput newForm, model.selectedDate, store.websocketUrl ) of
-                    ( Just { meal, comment }, Just date, Just websocketUrl ) ->
-                        let
-                            time =
-                                formatDateISOWithTimeZone
-                                    (Store.toTimeZoneVal
-                                        store.tzOffset
-                                    )
-                                    date
-
-                            params =
-                                if model.creatingComment then
-                                    { meal = meal
-                                    , comment = Just comment
-                                    , time = time
-                                    }
-                                else
-                                    { meal = meal
-                                    , comment = Nothing
-                                    , time = time
-                                    }
-
-                            cmd =
-                                Channel.create params
-                                    |> Phoenix.push websocketUrl
-                                    |> Cmd.map ChannelMsg
-                        in
-                            { newModel
-                                | submitting = True
-                            }
-                                ! [ cmd ]
-
-                    _ ->
-                        model ! []
-
         ChannelMsg channelState ->
             case channelState of
-                Channel.CreateSucceeds mealId_ ->
-                    case mealId_ of
-                        Ok mealId ->
-                            { defaults | newMeal = Just mealId }
+                Channel.CreateSucceeds sleepId_ ->
+                    case sleepId_ of
+                        Ok sleepId ->
+                            { defaults | newSleep = Just sleepId }
                                 ! [ getDateNow Today ]
 
                         Err err ->
@@ -240,8 +186,59 @@ update msg ({ form } as model) store =
                 _ ->
                     model ! []
 
+        SubmitForm ->
+            let
+                newForm =
+                    Form.update
+                        (validate model.creatingComment)
+                        Form.Submit
+                        form
+
+                newModel =
+                    { model | form = newForm }
+            in
+                case ( Form.getOutput newForm, model.startDate, store.websocketUrl ) of
+                    ( Just { comment }, Just date, Just websocketUrl ) ->
+                        let
+                            start =
+                                formatDateISOWithTimeZone
+                                    (Store.toTimeZoneVal
+                                        store.tzOffset
+                                    )
+                                    date
+
+                            params =
+                                if model.creatingComment then
+                                    { start = start
+                                    , comment = Just comment
+                                    }
+                                else
+                                    { start = start
+                                    , comment = Nothing
+                                    }
+
+                            cmd =
+                                Channel.create params
+                                    |> Phoenix.push websocketUrl
+                                    |> Cmd.map ChannelMsg
+                        in
+                            { newModel
+                                | submitting = True
+                            }
+                                ! [ cmd ]
+
+                    _ ->
+                        model ! []
+
         NoOp _ ->
             ( model, Cmd.none )
+
+
+validate : Bool -> Validation String FormValue
+validate creatingComment =
+    Validate.succeed FormValue
+        |> Validate.andMap
+            (Validate.field "comment" <| Comment.validate creatingComment)
 
 
 revalidateForm : Form.Msg -> Model -> Model
@@ -263,7 +260,7 @@ resetForm model =
         , serverError = Nothing
         , submitting = False
         , creatingComment = False
-        , newMeal = Nothing
+        , newSleep = Nothing
         , datePickerState = DateTimePicker.initialState
     }
 
@@ -274,15 +271,12 @@ resetForm model =
 
 commentControlId : String
 commentControlId =
-    "new-meal-comment"
+    "new-sleep-comment"
 
 
 view : Model -> Html Msg
 view ({ form, serverError, submitting } as model) =
     let
-        ( mealControl, mealInvalid ) =
-            formControlMeal model
-
         ( commentControl, commentInvalid, _ ) =
             Comment.formControl4
                 model.form
@@ -290,8 +284,8 @@ view ({ form, serverError, submitting } as model) =
                 FormMsg
                 model.creatingComment
 
-        ( timeControl, timeInvalid ) =
-            formControlTime model
+        ( startControl, startInvalid ) =
+            formControlStart model
 
         label_ =
             case submitting of
@@ -302,25 +296,21 @@ view ({ form, serverError, submitting } as model) =
                     "Submit"
 
         disableSubmitBtn =
-            timeInvalid
-                || mealInvalid
+            startInvalid
                 || commentInvalid
                 || ([] /= Form.getErrors form)
                 || (model.submitting == True)
-
-        disableResetBtn =
-            (model.submitting == True)
     in
         Html.div []
             [ nav
-                (Just Router.MealNew)
-                Router.MealList
-                Router.MealNew
-                "meal"
+                (Just Router.SleepNew)
+                Router.SleepList
+                Router.SleepNew
+                "sleep"
             , CreationSuccessAlert.view
-                { id = (Maybe.map fromMealId model.newMeal)
-                , route = Just Router.MealDetail
-                , label = "meal"
+                { id = (Maybe.map fromSleepId model.newSleep)
+                , route = Just Router.SleepDetail
+                , label = "sleep"
                 , dismissMsg = Nothing
                 }
             , Html.div
@@ -332,20 +322,35 @@ view ({ form, serverError, submitting } as model) =
                     [ Html.div
                         [ Attr.class "card" ]
                         [ Html.form
-                            [ Attr.class "card-body new-meal-form"
+                            [ Attr.class "card-body new-sleep-form"
                             , Attr.novalidate True
-                            , Attr.id "new-meal-form"
+                            , Attr.id "new-sleep-form"
                             , onSubmit SubmitForm
                             ]
                             [ FormUtils.textualErrorBox model.serverError
-                            , cardTitle "New meal"
+                            , cardTitle "New Sleep"
+                            , case model.creatingComment of
+                                True ->
+                                    Html.div [] []
+
+                                False ->
+                                    Html.div
+                                        [ styles
+                                            [ Css.displayFlex
+                                            , Css.flexDirection Css.rowReverse
+                                            , Css.marginBottom (Css.rem 0.6)
+                                            ]
+                                        ]
+                                        [ Comment.addCommentToggle
+                                            ToggleCommentForm
+                                            "new-sleep-sleep-comment-toggle"
+                                        ]
                             , Html.div
-                                [ Attr.class "new-meal-form-controls"
-                                , Attr.id "new-meal-form-controls"
+                                [ Attr.class "new-sleep-form-controls"
+                                , Attr.id "new-sleep-form-controls"
                                 , styles [ Css.marginBottom (Css.rem 1) ]
                                 ]
-                                [ mealControl
-                                , timeControl
+                                [ startControl
                                 , Comment.view
                                     commentControl
                                     model.creatingComment
@@ -353,10 +358,10 @@ view ({ form, serverError, submitting } as model) =
                                 ]
                             , FormUtils.formBtns
                                 [ Attr.disabled disableSubmitBtn
-                                , Attr.name "new-meal-submit-btn"
+                                , Attr.name "new-sleep-submit-btn"
                                 ]
-                                [ Attr.disabled disableResetBtn
-                                , Attr.name "new-meal-reset-btn"
+                                [ Attr.disabled (model.submitting == True)
+                                , Attr.name "new-sleep-reset-btn"
                                 ]
                                 label_
                                 ResetForm
@@ -367,98 +372,19 @@ view ({ form, serverError, submitting } as model) =
             ]
 
 
-formControlMeal : Model -> ( Html Msg, Bool )
-formControlMeal { form } =
+formControlStart : Model -> ( Html Msg, Bool )
+formControlStart model =
     let
-        mealField =
-            Form.getFieldAsString "meal" form
-
-        ( isValid, isInvalid ) =
-            FormUtils.controlValidityState mealField
-
-        mealFieldValue =
-            Maybe.withDefault
-                ""
-                mealField.value
-    in
-        (FormUtils.formGrp
-            Input.textArea
-            mealField
-            [ Attr.placeholder "Meal"
-            , Attr.name "new-meal-input"
-            , Attr.id "new-meal-input"
-            , Attr.value mealFieldValue
-            , Attr.class "autoExpand"
-            ]
-            { errorId = "new-meal-input-error-id"
-            , errors = Nothing
-            }
-            FormMsg
-        )
-            => isInvalid
-
-
-formControlTime : Model -> ( Html Msg, Bool )
-formControlTime model =
-    let
-        ( isValid, isInvalid, error ) =
-            case model.selectedDate of
-                Nothing ->
-                    ( False
-                    , True
-                    , Just "Select a date from the datepicker."
-                    )
-
-                Just _ ->
-                    ( True, False, Nothing )
-
-        dateInput =
-            DateTimePicker.dateTimePickerWithConfig
-                config
-                [ Attr.classList
-                    [ ( "form-control", True )
-                    , ( "is-invalid", isInvalid )
-                    , ( "is-valid", isValid )
-                    ]
-                , Attr.id "new-meal-time"
-                , Attr.name "new-meal-time"
-                ]
+        ( dateInput, isValid, isInvalid, error ) =
+            formControlDateTimePicker
+                model.startDate
+                DatePickerChanged
                 model.datePickerState
-                model.selectedDate
-
-        config : DateTimePickerConfig.Config (DatePickerConfig TimePickerConfig) Msg
-        config =
-            let
-                defaultDateTimeConfig =
-                    defaultDateTimePickerConfig DatePickerChanged
-
-                i18n =
-                    defaultDateTimeConfig.i18n
-
-                inputFormat =
-                    i18n.inputFormat
-
-                i18n_ =
-                    { i18n
-                        | inputFormat =
-                            { inputFormat
-                                | inputFormatter = formatDateForForm
-                            }
-                    }
-            in
-                { defaultDateTimeConfig
-                    | timePickerType = DateTimePickerConfig.Digital
-                    , i18n = i18n_
-                }
+                "new-sleep-start"
     in
         Html.div
-            [ Attr.id "new-meal-time-input-grpup" ]
-            [ dateInput
-            , FormUtils.textualError
-                { errors = error
-                , errorId = "new-meal-time-error-id"
-                }
-            ]
+            [ Attr.id "new-sleep-start-input-grpup" ]
+            [ dateInput ]
             => isInvalid
 
 
@@ -468,26 +394,7 @@ styles =
 
 
 
--- form validation
-
-
-validate : Bool -> Validation String FormValue
-validate creatingComment =
-    Validate.succeed FormValue
-        |> Validate.andMap
-            (Validate.field
-                "meal"
-                (nonEmpty 3
-                    |> withCustomError
-                        "Meal must be at least 3 characters."
-                )
-            )
-        |> Validate.andMap
-            (Validate.field "comment" <| Comment.validate creatingComment)
-
-
-
--- SUBSCRIPTIONS
+-- SUBSCRIPTION
 
 
 subscriptions : Model -> Sub Msg

@@ -33,6 +33,9 @@ type Route
     | MealDetail String
     | MealList
     | MealNew
+    | SleepDetail String
+    | SleepList
+    | SleepNew
 
 
 router : Parser (Route -> a) a
@@ -45,6 +48,9 @@ router =
         , Url.map MealNew (s "meals" </> (s "new"))
         , Url.map MealList (s "meals")
         , Url.map MealDetail (s "meals" </> Url.string)
+        , Url.map SleepNew (s "sleeps" </> (s "new"))
+        , Url.map SleepList (s "sleeps")
+        , Url.map SleepDetail (s "sleeps" </> Url.string)
         ]
 
 
@@ -83,6 +89,15 @@ routeToUrl route =
 
                 MealDetail id_ ->
                     [ "meals", id_ ]
+
+                SleepList ->
+                    [ "sleeps" ]
+
+                SleepNew ->
+                    [ "sleeps/new" ]
+
+                SleepDetail id_ ->
+                    [ "sleeps", id_ ]
 
                 NotFound ->
                     [ "404" ]

@@ -1,7 +1,7 @@
-module Meal.List
+module Sleep.List
     exposing
         ( Model
-        , Msg
+        , Msg(..)
         , ExternalMsg(..)
         , update
         , view
@@ -16,8 +16,13 @@ import Views.Nav exposing (nav)
 import Css
 import Router
 import Store exposing (Store)
-import Meal.Channel as Channel exposing (ChannelState)
-import Meal.Types exposing (PaginatedMeals, fromMealId, Meal)
+import Sleep.Types
+    exposing
+        ( PaginatedSleeps
+        , fromSleepId
+        , Sleep
+        , sleepDuration
+        )
 import Utils
     exposing
         ( Pagination
@@ -27,49 +32,52 @@ import Utils
 import Date.Format as DateFormat
 import Phoenix
 import Views.Pagination exposing (viewPagination)
+import Sleep.Channel as Channel exposing (ChannelState)
 
 
 type alias Model =
     ()
 
 
+init : Model
+init =
+    ()
+
+
 type Msg
-    = NoOp
+    = NoOp ()
     | Paginate Pagination
     | ChannelMsg ChannelState
 
 
 type alias QueryStore =
     { websocketUrl : Maybe String
-    , paginatedMeals : PaginatedMeals
+    , paginatedSleeps : PaginatedSleeps
     }
 
 
 queryStore : Store -> QueryStore
 queryStore store =
     { websocketUrl = Store.getWebsocketUrl store
-    , paginatedMeals = Store.getPaginatedMeals store
+    , paginatedSleeps = Store.getPaginatedSleeps store
     }
 
 
 type ExternalMsg
     = None
-    | MealsReceived PaginatedMeals
+    | SleepsReceived PaginatedSleeps
 
 
 update : Msg -> Model -> QueryStore -> ( ( Model, Cmd Msg ), ExternalMsg )
-update msg model { websocketUrl } =
+update msg model store =
     case msg of
-        NoOp ->
-            ( model, Cmd.none ) => None
-
         Paginate pagination ->
             let
                 cmd =
                     toPaginationVars pagination
                         |> Channel.list
                         |> Phoenix.push
-                            (Maybe.withDefault "" websocketUrl)
+                            (Maybe.withDefault "" store.websocketUrl)
                         |> Cmd.map ChannelMsg
             in
                 model ! [ cmd ] => None
@@ -79,7 +87,7 @@ update msg model { websocketUrl } =
                 Channel.ListSucceeds result ->
                     case result of
                         Ok data ->
-                            () ! [] => MealsReceived data
+                            () ! [] => SleepsReceived data
 
                         Err err ->
                             let
@@ -95,36 +103,33 @@ update msg model { websocketUrl } =
                 _ ->
                     model ! [] => None
 
+        NoOp _ ->
+            ( model, Cmd.none ) => None
+
 
 
 -- VIEW
 
 
-styles : List Css.Style -> Attribute msg
-styles =
-    Css.asPairs >> Attr.style
-
-
 view : Model -> QueryStore -> Html Msg
-view model { paginatedMeals } =
+view model { paginatedSleeps } =
     let
         { entries, pagination } =
-            paginatedMeals
+            paginatedSleeps
     in
-        Html.div
-            [ Attr.id "meal-list-view" ]
+        Html.div [ Attr.id "sleep-list-view" ]
             [ nav
-                (Just Router.MealList)
-                Router.MealList
-                Router.MealNew
-                "meal"
+                (Just Router.SleepList)
+                Router.SleepList
+                Router.SleepNew
+                "sleep"
             , viewTable entries
             , viewPagination pagination Paginate
             ]
 
 
-viewTable : List Meal -> Html Msg
-viewTable meals =
+viewTable : List Sleep -> Html Msg
+viewTable sleeps =
     Html.div
         [ Attr.class "iw" ]
         [ Html.table
@@ -132,7 +137,7 @@ viewTable meals =
             [ viewHeader
             , Html.tbody
                 []
-                (List.map viewMealRow meals)
+                (List.map viewSleepRow sleeps)
             ]
         ]
 
@@ -148,34 +153,22 @@ viewHeader =
                 []
             , Html.th
                 [ Attr.class "header" ]
-                [ Html.text "Meal" ]
+                [ Html.text "Start" ]
             , Html.th
                 [ Attr.class "header" ]
-                [ Html.text "Time" ]
+                [ Html.text "End" ]
+            , Html.th
+                [ Attr.class "header" ]
+                [ Html.text "Duration" ]
             ]
         ]
 
 
-viewMealRow : Meal -> Html Msg
-viewMealRow { id, meal, time } =
-    Html.tr
-        []
-        [ Html.td []
-            [ Html.a
-                [ Attr.class
-                    "bpb fa fa-eye meal-list-to-meal-detail-link"
-                , Attr.attribute "aria-hidden" "true"
-                , styles [ Css.color Css.inherit ]
-                , Router.href <| Router.MealDetail <| fromMealId id
-                ]
-                []
-            ]
-        , Html.td
-            []
-            [ Html.text meal ]
-        , Html.td
-            []
-            [ Html.div
+viewSleepRow : Sleep -> Html Msg
+viewSleepRow { id, start, end } =
+    let
+        viewFormattedTime time =
+            Html.div
                 []
                 [ Html.div
                     []
@@ -184,19 +177,40 @@ viewMealRow { id, meal, time } =
                     []
                     [ Html.text <| DateFormat.format "%l:%M %p" time ]
                 ]
+    in
+        Html.tr
+            []
+            [ Html.td []
+                [ Html.a
+                    [ Attr.class
+                        "bpb fa fa-eye sleep-list-to-sleep-detail-link"
+                    , Attr.attribute "aria-hidden" "true"
+                    , styles [ Css.color Css.inherit ]
+                    , Router.href <| Router.SleepDetail <| fromSleepId id
+                    ]
+                    []
+                ]
+            , Html.td
+                []
+                [ viewFormattedTime start ]
+            , Html.td
+                []
+                [ viewFormattedTime end ]
+            , Html.td
+                []
+                [ Html.text <| sleepDuration start end ]
             ]
-        ]
+
+
+styles : List Css.Style -> Attribute msg
+styles =
+    Css.asPairs >> Attr.style
 
 
 
--- SUBSCRIPTIONS
+-- SUBSCRIPTION
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
-
-
-init : Model
-init =
-    ()

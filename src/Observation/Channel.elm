@@ -55,7 +55,7 @@ channel : Channel ChannelState
 channel =
     let
         ( payLoad, response ) =
-            listObservationsChannelParams GUtils.defaultPaginationParamsVar
+            listObservationsChannelParams GUtils.defaultPaginationVar
     in
         channelName
             |> Channel.init
@@ -161,7 +161,7 @@ updateObservation args =
             |> Push.onError UpdateObservationFails
 
 
-listObservations : GUtils.PaginationParamsVars -> Push ChannelState
+listObservations : GUtils.PaginationVars -> Push ChannelState
 listObservations vars =
     let
         ( payLoad, response ) =
@@ -174,7 +174,7 @@ listObservations vars =
 
 
 listObservationsChannelParams :
-    GUtils.PaginationParamsVars
+    GUtils.PaginationVars
     -> ( Je.Value, Jd.Value -> Result String PaginatedObservations )
 listObservationsChannelParams vars =
     let
@@ -349,14 +349,14 @@ paginatedObservationResponse =
 
 
 paginatedObservationsQueryRequest :
-    GUtils.PaginationParamsVars
+    GUtils.PaginationVars
     -> Request Query PaginatedObservations
 paginatedObservationsQueryRequest params =
     let
         paginationVar =
             Var.required "pagination" .pagination GUtils.paginationVarSpec
 
-        queryRoot : Document Query PaginatedObservations GUtils.PaginationParamsVars
+        queryRoot : Document Query PaginatedObservations GUtils.PaginationVars
         queryRoot =
             Grb.queryDocument <|
                 Grb.extract <|
