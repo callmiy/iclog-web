@@ -47,6 +47,10 @@ button[disabled]{
   cursor: not-allowed;
 }
 
+.btn {
+  cursor: pointer;
+}
+
 .ui.message {
   padding: 0.5rem 0.75rem;
   margin: 0.6em 0;

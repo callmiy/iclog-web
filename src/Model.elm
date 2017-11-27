@@ -4,6 +4,7 @@ module Model
         , Msg(..)
         , init
         , update
+        , channel
         )
 
 import Page exposing (Page, PageState(..))
@@ -23,6 +24,7 @@ import Sleep.List as SleepList
 import Sleep.New as SleepNew
 import Sleep.Detail.App as SleepDetail
 import Sleep.Channel as SleepChannel
+import Phoenix.Channel as Channel exposing (Channel)
 
 
 type alias Model =
@@ -72,6 +74,9 @@ type Msg
     | SleepNewMsg SleepNew.Msg
     | SleepDetailMsg SleepDetail.Msg
     | SleepChannelMsg SleepChannel.ChannelState
+    | WebsocketError
+    | Joining
+    | Joined
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -323,6 +328,24 @@ update msg ({ pageState, store } as model) =
                 }
                     ! [ Cmd.map SleepDetailMsg cmd ]
 
+        ( Joining, _ ) ->
+            { model
+                | store = Store.updateConnectionStatus Store.Connecting store
+            }
+                ! []
+
+        ( Joined, _ ) ->
+            { model
+                | store = Store.updateConnectionStatus Store.Connected store
+            }
+                ! []
+
+        ( WebsocketError, _ ) ->
+            { model
+                | store = Store.updateConnectionStatus Store.Disconnected store
+            }
+                ! []
+
         _ ->
             ( model, Cmd.none )
 
@@ -481,3 +504,25 @@ updateObservationDetail subMsg ({ store } as model) subModel =
                             store
                 }
                     ! [ cmd ]
+
+
+
+------------------------CHANNEL-----------------
+
+
+channelName : String
+channelName =
+    "observation:main"
+
+
+channel : Channel Msg
+channel =
+    channelName
+        |> Channel.init
+        |> Channel.onRequestJoin Joining
+        |> Channel.onJoin (always Joined)
+        |> Channel.onLeave (always WebsocketError)
+        |> Channel.onDisconnect WebsocketError
+        |> Channel.onError WebsocketError
+        |> Channel.onJoinError (always WebsocketError)
+        |> Channel.withDebug

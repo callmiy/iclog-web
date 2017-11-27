@@ -3,6 +3,7 @@ module Store
         ( Store
         , Flag
         , TimeZoneOffset
+        , ConnectionStatus(..)
         , getWebsocketUrl
         , create
         , getTimeZoneOffset
@@ -19,6 +20,8 @@ module Store
         , updatePaginatedSleeps
         , addSleep
         , updateSleep
+        , updateConnectionStatus
+        , getConnectionStatus
         )
 
 import Observation.Types
@@ -54,7 +57,14 @@ type Store
         , paginatedObservations : PaginatedObservations
         , paginatedMeals : PaginatedMeals
         , paginatedSleeps : PaginatedSleeps
+        , connectionStatus : ConnectionStatus
         }
+
+
+type ConnectionStatus
+    = Connecting
+    | Connected
+    | Disconnected
 
 
 create : Flag -> Store
@@ -75,6 +85,7 @@ create { apiUrl, websocketUrl, timeZoneOffset } =
             { entries = []
             , pagination = defaultPagination
             }
+        , connectionStatus = Connecting
         }
 
 
@@ -214,3 +225,13 @@ updateSleep ({ id } as sleep) store =
             }
     in
         updatePaginatedSleeps pmls store
+
+
+updateConnectionStatus : ConnectionStatus -> Store -> Store
+updateConnectionStatus status (Store store) =
+    Store { store | connectionStatus = status }
+
+
+getConnectionStatus : Store -> ConnectionStatus
+getConnectionStatus (Store { connectionStatus }) =
+    connectionStatus

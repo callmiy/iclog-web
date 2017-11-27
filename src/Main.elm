@@ -4,7 +4,7 @@ import Phoenix
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
 import Phoenix.Channel as Channel
 import View
-import Model exposing (Model, Msg)
+import Model exposing (Model, Msg(..))
 import Store exposing (Flag)
 import Page
 import Observation.Detail.App as ObservationDetail
@@ -28,7 +28,7 @@ subs model =
                     []
 
                 Page.ObservationNew subModel ->
-                    [ Sub.map Model.ObservationNewMsg <|
+                    [ Sub.map ObservationNewMsg <|
                         ObservationNew.subscriptions subModel
                     ]
 
@@ -36,7 +36,7 @@ subs model =
                     []
 
                 Page.ObservationDetail subModel ->
-                    [ Sub.map Model.ObservationDetailMsg <|
+                    [ Sub.map ObservationDetailMsg <|
                         ObservationDetail.subscriptions subModel
                     ]
 
@@ -50,6 +50,9 @@ subs model =
 socket : String -> Socket Msg
 socket url =
     Socket.init url
+        |> Socket.onClose (always WebsocketError)
+        |> Socket.onNormalClose WebsocketError
+        |> Socket.onAbnormalClose (always WebsocketError)
         |> Socket.reconnectTimer
             (\backoffIteration -> (backoffIteration + 1) * 5000 |> toFloat)
 
@@ -61,18 +64,27 @@ phoenixSubscription ({ store, pageState } as model) =
             let
                 page =
                     Page.getPage pageState
+
+                status =
+                    Store.getConnectionStatus store
             in
-                Phoenix.connect (socket url)
-                    [ Channel.map
-                        Model.ObservationChannelMsg
-                        ObservationChannel.channel
-                    , Channel.map
-                        Model.MealChannelMsg
-                        MealChannel.channel
-                    , Channel.map
-                        Model.SleepChannelMsg
-                        SleepChannel.channel
-                    ]
+                Phoenix.connect (socket url) <|
+                    Model.channel
+                        :: case status of
+                            Store.Connected ->
+                                [ Channel.map
+                                    ObservationChannelMsg
+                                    ObservationChannel.channel
+                                , Channel.map
+                                    MealChannelMsg
+                                    MealChannel.channel
+                                , Channel.map
+                                    SleepChannelMsg
+                                    SleepChannel.channel
+                                ]
+
+                            _ ->
+                                []
 
         Nothing ->
             Sub.none
@@ -84,7 +96,7 @@ phoenixSubscription ({ store, pageState } as model) =
 
 main : Program Flag Model Msg
 main =
-    Navigation.programWithFlags (Router.fromLocation >> Model.SetRoute)
+    Navigation.programWithFlags (Router.fromLocation >> SetRoute)
         { view = View.view
         , init = Model.init
         , update = Model.update

@@ -17,6 +17,7 @@ import Css
 import Sleep.List as SleepList
 import Sleep.New as SleepNew
 import Sleep.Detail.View as SleepDetailView
+import Store
 
 
 view : Model -> Html Msg
@@ -32,7 +33,8 @@ view ({ pageState } as model) =
             [ navigation model
             , Html.div
                 [ Attr.class "et bmj" ]
-                [ Html.div
+                [ connectionError <| Store.getConnectionStatus model.store
+                , Html.div
                     -- we display page headers in class "bls blu"
                     [ Attr.class "bls" ]
                     [ Html.div
@@ -61,6 +63,32 @@ view ({ pageState } as model) =
                 , pageView
                 ]
             ]
+
+
+connectionError : Store.ConnectionStatus -> Html msg
+connectionError status =
+    let
+        dom bgColor txt =
+            Html.div
+                [ styles
+                    [ Css.backgroundColor bgColor
+                    , Css.marginBottom (Css.px 10)
+                    , Css.color (Css.rgb 255 255 255)
+                    , Css.fontSize (Css.rem 1)
+                    , Css.textAlign Css.center
+                    ]
+                ]
+                [ Html.text txt ]
+    in
+        case status of
+            Store.Disconnected ->
+                dom (Css.rgb 243 142 101) "Searching for network..."
+
+            Store.Connecting ->
+                dom (Css.rgb 158 208 138) "Connecting..."
+
+            Store.Connected ->
+                Html.text ""
 
 
 viewPage : Page -> Model -> ( Html Msg, String )
